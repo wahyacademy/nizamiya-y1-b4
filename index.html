@@ -242,6 +242,20 @@ details.scd > .stack{gap:10px}
   .btn{min-height:42px}
   .btn:not(.main){padding:6px 11px}
 }
+
+.week ul li.due{display:flex;flex-direction:column;align-items:stretch;gap:3px;padding:10px 12px;border:1px solid var(--line);border-right:4px solid var(--line);border-radius:10px;background:var(--surface)}
+.week ul li.due.quiz{border-right-color:var(--brand)}
+.week ul li.due.task{border-right-color:var(--gold)}
+.week ul li.due.rec{border-right-color:#1f7f74}
+.recs{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.recs li{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13.5px}
+.recs .btn{min-height:34px;padding:3px 10px}
+.due-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.due-t{font-weight:700;font-size:14px;color:var(--brand-deep)}
+.due-m{font-size:12px;color:var(--muted);font-weight:600;background:var(--bg);border-radius:999px;padding:1px 10px}
+.due-b{font-weight:600;font-size:14.5px}
+.due-d{font-size:13px;color:var(--muted);display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+.due-a{margin-top:4px}
 footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:12px;display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:space-between}
 footer a{color:var(--brand);font-weight:600;text-decoration:none}
 </style>
@@ -556,6 +570,11 @@ function annStrip(trackId){
 /* ---------- «كمّل من حيث وقفت» ---------- */
 function lastWatched(){ try{ return JSON.parse(store.get("wahy_y1b4_last") || "null"); }catch(e){ return null; } }
 
+/* بند في «مطلوب منك»: نوعه واضح (اختبار/تكليف/تسجيلات) ثم المساق ثم التفاصيل */
+function dueItem(kind, type, trackName, title, detail, action){
+  return `<li class="due ${kind}"><div class="due-h"><span class="due-t">${type}</span><span class="due-m">${esc(trackName)}</span></div>
+    <div class="due-b">${title}</div><div class="due-d">${detail}</div>${action ? `<div class="due-a">${action}</div>` : ""}</li>`;
+}
 /* ---------- «خطوتك الجاية»: أهم شيء واحد الآن ---------- */
 function nextStep(term, now, over){
   const card = (tag, title, sub, action) => `<section class="nextstep"><small>${tag}</small><b>${title}</b>${sub ? `<span class="sub">${sub}</span>` : ""}${action || ""}</section>`;
@@ -612,16 +631,20 @@ function weekView(){
       if(sc && sc.quizAt && isUrl(l.quiz)){
         const open = inWindow(now, sc.quizAt.from, sc.quizAt.to);
         quizzes.push({ open, left: open ? untilMin(now, sc.quizAt.to.dow, sc.quizAt.to.time) : untilMin(now, sc.quizAt.from.dow, sc.quizAt.from.time),
-          html: `<li><span class="pill ${open ? "open" : ""}">${open ? "مفتوح · باقي " + fmtLeft(untilMin(now, sc.quizAt.to.dow, sc.quizAt.to.time)) : "يُفتح " + DAYS[sc.quizAt.from.dow] + " " + clock(sc.quizAt.from.time)}</span>
-            <span class="wt"><b>${esc(short)}</b> · اختبار ${esc(sub.name)} (${esc(l.label)})${open ? ` · يُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)}` : ""}</span>
-            ${open ? btn(l.quiz, "ابدأ", "quiz", true) : ""}</li>` });
+          html: dueItem("quiz", "📝 اختبار تنشيطي", track.name, `${esc(sub.name)} · ${esc(l.label)}`,
+            open ? `<span class="pill open">مفتوح الآن</span> يُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)} · باقي ${fmtLeft(untilMin(now, sc.quizAt.to.dow, sc.quizAt.to.time))}`
+                 : `<span class="pill">لم يُفتح بعد</span> يُفتح ${DAYS[sc.quizAt.from.dow]} ${clock(sc.quizAt.from.time)} · ويُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)}`,
+            open ? btn(l.quiz, "ابدأ الاختبار", "quiz", true) : "") });
       }
-      if(l.tasks.length) tasks.push(`<li><span class="pill warn">تكليف</span><span class="wt"><b>${esc(short)}</b> · ${esc(sub.name)}: ${l.tasks.length === 1 ? "تكليف واحد" : l.tasks.length + " تكليفات"}</span><button type="button" class="btn" data-open="${esc(track.id)}" data-k="${k}">عرض</button></li>`);
+      if(l.tasks.length) tasks.push(dueItem("task", "✍️ تكليف", track.name, `${esc(sub.name)} · ${esc(l.label)}`,
+        l.tasks.length === 1 ? "تكليف واحد مطلوب من آخر محاضرة" : l.tasks.length + " تكليفات مطلوبة من آخر محاضرة",
+        `<button type="button" class="btn" data-open="${esc(track.id)}" data-k="${k}">عرض التكليف</button>`));
     });
-    if(unseenN) unseen.push(`<li><span class="pill">لم تشاهدها</span><span class="wt"><b>${esc(short)}</b>: ${unseenN} ${unseenN === 1 ? "محاضرة" : unseenN <= 10 ? "محاضرات" : "محاضرة"}</span><button type="button" class="btn" data-open="${esc(track.id)}">عرض</button></li>`);
+    if(unseenN) unseen.push(`<li><span><b>${esc(short)}</b>: ${unseenN} ${unseenN === 1 ? "محاضرة" : unseenN <= 10 ? "محاضرات" : "محاضرة"}</span><button type="button" class="btn" data-open="${esc(track.id)}">عرض</button></li>`);
   });
   quizzes.sort((a, b) => (b.open - a.open) || (a.left - b.left));
-  const due = [...quizzes.map(x => x.html), ...tasks, ...unseen];
+  const due = [...quizzes.map(x => x.html), ...tasks];
+  if(unseen.length) due.push(`<li class="due rec"><div class="due-h"><span class="due-t">🎥 تسجيلات لم تشاهدها</span><span class="due-m">كل المساقات</span></div><div class="due-d">شاهدها قبل محاضرة كل مساق القادمة</div><ul class="recs">${unseen.join("")}</ul></li>`);
   out.push(`<section class="card week"><h3>مطلوب منك الأسبوع ده</h3>${due.length ? `<ul>${due.join("")}</ul>` : `<p class="rnote">لا يوجد مطلوب الآن، بارك الله فيك 🌿</p>`}</section>`);
 
   /* أجندة الأسبوع من السبت إلى الجمعة */
