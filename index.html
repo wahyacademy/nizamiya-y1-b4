@@ -36,7 +36,11 @@ h1{font-family:var(--display);font-weight:700;font-size:clamp(23px,5vw,31px);lin
 .wrap{max-width:780px;margin:0 auto;padding:22px 16px 48px;display:flex;flex-direction:column;gap:20px}
 h2{font-family:var(--display);font-weight:700;font-size:23px;margin:0;color:var(--brand-deep)}
 .card{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:12px;box-shadow:0 1px 3px rgba(20,38,61,.06)}
-.pickers{display:flex;flex-direction:column;gap:10px;padding:14px}
+.pickers{display:flex;flex-direction:column;gap:10px}
+.pickers{display:contents}
+.trackbar{position:sticky;top:0;z-index:20;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:10px 12px;margin:0 -16px;background:rgba(243,246,250,.94);backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.trackbar::-webkit-scrollbar{display:none}
+.trackbar .chip{flex:none;white-space:nowrap}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .row-label{font-size:12.5px;color:var(--muted);min-width:52px;font-weight:600}
 .chip,.tab{font:inherit;font-weight:600;cursor:pointer;color:var(--ink)}
@@ -58,10 +62,10 @@ details.old[open] summary::before{transform:rotate(-90deg)}
 details.old summary .hint{color:var(--muted);font-size:13px}
 details.old[open] > .stack{margin-top:14px}
 .sched{padding:14px 16px;display:flex;flex-direction:column;gap:12px}
-.sc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:0}
-.sc-row{display:flex;flex-direction:column;gap:2px;min-width:0}
-.sc-row dt{font-size:12px;color:var(--muted);font-weight:600}
-.sc-row dd{margin:0;font-weight:600;font-size:14.5px}
+.sc-grid{display:flex;flex-direction:column;gap:5px;margin:0}
+.sc-row{display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;min-width:0;font-size:14px}
+.sc-row dt{font-size:12.5px;color:var(--muted);font-weight:600;min-width:86px}
+.sc-row dd{margin:0;font-weight:600}
 .sc-courses{list-style:none;margin:0;padding:10px 0 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
 .sc-courses li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 12px;font-size:14px}
 .sc-courses span{color:var(--muted);font-size:13px}
@@ -89,10 +93,10 @@ ol.lectures{list-style:none;margin:0;padding:0;display:flex;flex-direction:colum
 .t-text{display:inline-flex;gap:6px;align-items:baseline;min-width:0;overflow-wrap:anywhere}
 .t-text svg{width:14px;height:14px;flex:none;color:var(--gold-ink);align-self:center}
 .t-link{color:var(--brand);font-weight:600;font-size:13px}
-.ref-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
-.ref{display:flex;align-items:center;gap:10px;padding:11px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:600}
+.ref-grid{display:flex;flex-wrap:wrap;gap:8px}
+.ref{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);text-decoration:none;font-weight:600;font-size:13px}
 .ref:hover{border-color:var(--brand)}
-.ref svg{color:var(--brand);width:20px;height:20px;flex:none}
+.ref svg{color:var(--brand);width:15px;height:15px;flex:none}
 .msg{background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:26px 18px;text-align:center;color:var(--muted)}
 .msg a{color:var(--brand);font-weight:600}
 
@@ -158,6 +162,29 @@ button.btn{cursor:pointer;font-family:inherit}
 .rsend{align-self:flex-start;background:var(--brand);color:#fff;border:0;border-radius:9px;padding:9px 22px;font:inherit;font-weight:700;cursor:pointer}
 .rsend:disabled{opacity:.6}
 
+.btn:not(.main){font-size:12.5px;padding:4px 10px}
+.btn.seen-btn{padding:4px 9px}
+.actions .btn.main{flex:1 1 100%;justify-content:center;padding:8px 12px;font-size:14px}
+@media (min-width:600px){ .actions .btn.main{flex:0 0 auto;padding:5px 14px;font-size:13.5px} }
+.prog{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.prog .bar{flex:1;height:6px;border-radius:99px;background:var(--line);overflow:hidden}
+.prog .bar i{display:block;height:100%;background:#1f7f74;border-radius:99px}
+details.more summary{cursor:pointer;list-style:none;text-align:center;font-weight:600;color:var(--brand);padding:9px;border:1px dashed var(--line);border-radius:10px;background:var(--surface);font-size:14px}
+details.more summary::-webkit-details-marker{display:none}
+details.more[open] summary{margin-bottom:10px}
+@media (max-width:599px){
+  .top-in{padding:14px 14px 12px;gap:12px}
+  .logo{height:46px}
+  h1{font-size:21px}
+  .wrap{padding:0 14px 40px;gap:14px}
+  .trackbar{margin:0 -14px;padding:8px 14px}
+  .lec{padding:11px 12px;gap:4px 10px}
+  .num{width:32px;height:32px;font-size:14px}
+  .actions{grid-column:1 / -1}
+  .tasks{grid-column:1 / -1}
+  .sched,.week{padding:12px 13px}
+  h2{font-size:21px}
+}
 footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:12px;display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:space-between}
 footer a{color:var(--brand);font-weight:600;text-decoration:none}
 </style>
@@ -188,9 +215,9 @@ footer a{color:var(--brand);font-weight:600;text-decoration:none}
     <small>لم يظهر زر جوجل؟ انسخ الرابط وافتحه في Chrome: <button type="button" id="g-copy">نسخ رابط الصفحة</button></small>
   </section>
 
-  <div class="card pickers" id="pickers" hidden>
-    <div class="row"><span class="row-label">المساق</span><div class="row" id="tracks"></div></div>
-    <input class="search" id="q" type="search" placeholder="ابحث في محاضرات الترمين، مثل: بدر" aria-label="بحث في المحاضرات">
+  <div class="pickers" id="pickers" hidden>
+    <div class="trackbar" id="tracks" role="tablist" aria-label="المساق"></div>
+    <input class="search" id="q" type="search" placeholder="🔍 ابحث في محاضرات الترمين، مثل: بدر" aria-label="بحث في المحاضرات">
   </div>
 
   <main id="main"><div class="msg">جارِ التحميل…</div></main>
@@ -240,7 +267,7 @@ const isUrl = s => /^https?:\/\//i.test((s||"").trim());
 const norm = s => String(s||"").replace(/[ً-ْـ]/g,"").replace(/[أإآ]/g,"ا").replace(/ة/g,"ه").replace(/ى/g,"ي").toLowerCase();
 const store = { get(k){ try{return localStorage.getItem(k)||""}catch(e){return ""} }, set(k,v){ try{ v ? localStorage.setItem(k,v) : localStorage.removeItem(k) }catch(e){} } };
 
-const state = { track: "thu", sub: {}, open: {}, q: "" };
+const state = { track: "thu", sub: {}, open: {}, more: {}, q: "" };
 let DATA = null;          // { current, terms:[{id,name,finals,tracks:[{id,name,schedule,subjects:[{name,total,rows}]}]}] }
 let TERM_ORDER = [];
 const parsed = new WeakMap();
@@ -385,7 +412,7 @@ function vidBtn(url, label, title, id){
 function rateBtn(id, l, ctx){
   if(!ctx || !ctx.current || !isUrl(l.rec)) return "";
   const done = EXTRA.rated.includes(id);
-  return `<button type="button" class="btn rate${done ? " done" : ""}" data-rate="${esc(id)}" data-rt="${esc(ctx.subj + " · " + l.label + (l.title ? ": " + l.title : ""))}">${done ? "✓ قيّمتها · تعديل" : "★ قيّم المحاضرة"}</button>`;
+  return `<button type="button" class="btn rate${done ? " done" : ""}" data-rate="${esc(id)}" data-rt="${esc(ctx.subj + " · " + l.label + (l.title ? ": " + l.title : ""))}">${done ? "✓ قيّمتها" : "★ قيّم"}</button>`;
 }
 const lecActions = (l, s, ctx) =>
   vidBtn(l.rec, "مشاهدة التسجيل", (ctx ? ctx.subj + " · " : "") + l.label + (l.title ? ": " + l.title : ""), lecId(ctx, l)) +
@@ -393,7 +420,7 @@ const lecActions = (l, s, ctx) =>
   s.perLecture.map(k => btn(l.files[k].val, l.files[k].name, "file", false, true)).join("") +
   btn(l.quiz, "الاختبار", "quiz", false, s.showQuiz) +
   l.extra.filter(x => x.icon !== "play").map(x => btn(x.url, x.name, x.icon)).join("") +
-  (ctx && isUrl(l.rec) ? `<button type="button" class="btn seen-btn" data-seen="${esc(lecId(ctx, l))}" aria-pressed="${!!SEEN[lecId(ctx, l)]}">${SEEN[lecId(ctx, l)] ? "✓ شاهدتها" : "شاهدتها؟"}</button>` : "") +
+  (ctx && isUrl(l.rec) ? `<button type="button" class="btn seen-btn" data-seen="${esc(lecId(ctx, l))}" aria-pressed="${!!SEEN[lecId(ctx, l)]}">${SEEN[lecId(ctx, l)] ? "✓ شاهدتها" : "○ شاهدتها"}</button>` : "") +
   rateBtn(lecId(ctx, l), l, ctx);
 const lecItem = (l, s, subjName, ctx) => `
   <li class="lec${ctx && SEEN[lecId(ctx, l)] ? " seen" : ""}">
@@ -476,10 +503,21 @@ function weekCard(term, track){
 
 function drawPickers(){
   document.getElementById("tracks").innerHTML = TERM_ORDER[0].tracks.map(t =>
-    `<button class="chip" data-track="${esc(t.id)}" aria-pressed="${t.id === state.track}">${esc(t.name)}</button>`).join("");
+    `<button class="chip" data-track="${esc(t.id)}" aria-pressed="${t.id === state.track}">${esc(t.name.replace(/^مساق\s+/, ""))}</button>`).join("");
 }
 
 /* ترتيب المقررات في الترم الحالي: المقرر الجاري أولًا (آخر مقرر بدأ ولم يكتمل)، ثم الأحدث فالأقدم، ثم ما لم يبدأ بعد */
+/* آخر محاضرة ظاهرة، والباقي مطوي */
+function lectureList(r, ctx, sub){
+  const list = [...r.lectures].reverse().map(l => lecItem(l, r, "", ctx));
+  const key = ctx.term + "|" + ctx.track + "|" + ctx.k;
+  return `<ol class="lectures">${list[0]}</ol>` + (list.length > 1 ? `<details class="more" data-more="${esc(key)}"${state.more[key] ? " open" : ""}><summary>عرض باقي محاضرات ${esc(sub.name)} (${list.length - 1})</summary><ol class="lectures">${list.slice(1).join("")}</ol></details>` : "");
+}
+function progress(r, ctx){
+  const rec = r.lectures.filter(l => isUrl(l.rec)); if(!rec.length) return "";
+  const w = rec.filter(l => SEEN[lecId(ctx, l)]).length, pct = Math.round(w / rec.length * 100);
+  return `<div class="prog"><span>شاهدت ${w} من ${rec.length}</span><span class="bar"><i style="width:${pct}%"></i></span></div>`;
+}
 function subjOrder(term, track){
   const idx = track.subjects.map((_, k) => k);
   if(term.id !== DATA.current) return idx;
@@ -503,10 +541,10 @@ function subjectBody(term, track){
     r.shared.forEach(x => top.push(`<a class="ref" href="${esc(x.url)}" target="_blank" rel="noopener">${ICON.file}${esc(x.name)} (للمقرر كله)</a>`));
     r.refs.forEach(x => top.push(`<a class="ref" href="${esc(x.url)}" target="_blank" rel="noopener">${ICON.folder}${esc(x.label)}</a>`));
     body = `
-      <div class="meta"><span>مقرر ${esc(sub.name)}</span><span>${sub.total ? `${r.lectures.length} من ${sub.total} محاضرة` : `${r.lectures.length} محاضرة`}${(() => { const w = r.lectures.filter(x => SEEN[lecId(ctx, x)]).length; return w ? ` · شاهدت ${w}` : ""; })()}</span></div>
+      <div class="meta"><span>مقرر ${esc(sub.name)}</span><span>${sub.total ? `${r.lectures.length} من ${sub.total} محاضرة` : `${r.lectures.length} محاضرة`}</span></div>
       ${top.length ? `<div class="ref-grid">${top.join("")}</div>` : ""}
-      ${r.lectures.length ? `<ol class="lectures">${[...r.lectures].reverse().map(l => lecItem(l, r, "", ctx)).join("")}</ol>`
-                         : `<div class="msg">لم تُضف محاضرات ${esc(sub.name)} بعد.</div>`}`;
+      ${progress(r, ctx)}
+      ${r.lectures.length ? lectureList(r, ctx, sub) : `<div class="msg">لم تُضف محاضرات ${esc(sub.name)} بعد.</div>`}`;
   }
   return `
     <div class="tabs" role="tablist">${order.map(k =>
@@ -646,7 +684,9 @@ document.getElementById("main").addEventListener("click", e => {
 });
 document.getElementById("main").addEventListener("toggle", e => {
   const d = e.target.closest && e.target.closest("[data-old]");
-  if(d) state.open[d.dataset.old] = d.open;
+  if(d && e.target === d) state.open[d.dataset.old] = d.open;
+  const m = e.target.closest && e.target.closest("[data-more]");
+  if(m && e.target === m) state.more[m.dataset.more] = m.open;
 }, true);
 let qt; document.getElementById("q").addEventListener("input", e => { clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value; if(DATA) drawMain(); }, 200); });
 window.addEventListener("hashchange", () => { const t = fromHash(location.hash); if(DATA && t && t !== state.track) go(t); });
