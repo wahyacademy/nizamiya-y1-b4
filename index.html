@@ -208,6 +208,40 @@ details.more[open] summary{margin-bottom:10px}
 .tt td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
 .tt td small{display:block;color:var(--muted);font-size:12px}
 .lnk{font:inherit;font-weight:700;color:var(--brand);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+
+.chip i{font-style:normal;margin-inline-end:5px}
+.chip .ls{display:none}
+.btn,.chip,.tab{min-height:40px}
+.tab{display:inline-flex;align-items:center;gap:6px}
+.tab .dotn{width:8px;height:8px;border-radius:50%;background:var(--gold);display:inline-block}
+.tab .ok{color:#1f7f74;font-weight:700}
+.tab[aria-selected="true"] .ok{color:#9be3d6}
+.nextstep{background:linear-gradient(135deg,var(--brand-deep),var(--brand));color:#fff;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;border-bottom:4px solid var(--gold)}
+.nextstep small{color:var(--gold);font-weight:700;font-size:12.5px}
+.nextstep b{font-size:17px;line-height:1.5}
+.nextstep .sub{color:#dbe7f3;font-size:13px}
+.nextstep .btn{align-self:flex-start;background:var(--gold);border-color:var(--gold);color:var(--brand-deep);font-weight:700;font-size:14px;padding:8px 18px}
+.nextstep .btn svg{color:var(--brand-deep)}
+details.scd summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:600;color:var(--ink)}
+details.scd summary::-webkit-details-marker{display:none}
+details.scd summary::after{content:"تفاصيل ▾";color:var(--brand);font-size:12.5px;flex:none}
+details.scd[open] summary::after{content:"إخفاء ▴"}
+details.scd[open] summary{margin-bottom:10px}
+details.scd > .stack{gap:10px}
+@media (max-width:599px){
+  body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
+  .wrap{padding-top:14px}
+  .trackbar{position:fixed;top:auto;bottom:0;left:0;right:0;margin:0;padding:6px 4px calc(6px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:rgba(255,255,255,.97);border-top:1px solid var(--line);border-bottom:0;box-shadow:0 -2px 10px rgba(20,38,61,.08)}
+  .trackbar .chip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:0;background:transparent;padding:4px 2px;border-radius:10px;font-size:11.5px;min-height:50px;color:var(--muted)}
+  .trackbar .chip i{margin:0;font-size:19px;line-height:1.1}
+  .trackbar .chip .lf{display:none}
+  .trackbar .chip .ls{display:block;white-space:nowrap}
+  .trackbar .chip[aria-pressed="true"]{background:var(--brand-soft);color:var(--brand-deep)}
+  .trackbar .chip.wk{background:transparent;color:var(--muted)}
+  .trackbar .chip.wk[aria-pressed="true"]{background:var(--gold-soft);color:var(--gold-ink)}
+  .btn{min-height:42px}
+  .btn:not(.main){padding:6px 11px}
+}
 footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:12px;display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:space-between}
 footer a{color:var(--brand);font-weight:600;text-decoration:none}
 </style>
@@ -458,8 +492,12 @@ function scheduleCard(term, track){
   if(!sc && !term.finals) return "";
   const row = (k, v) => v ? `<div class="sc-row"><dt>${k}</dt><dd>${esc(v)}</dd></div>` : "";
   const cur = term.id === DATA.current && !termOver(term);
+  const line = sc && sc.at ? ["🕐 " + DAYS[sc.at.dow] + " " + clock(sc.at.start),
+    sc.recAt ? "🎥 التسجيل " + (sc.recAt.dow === sc.at.dow ? "" : DAYS[sc.recAt.dow] + " ") + clock(sc.recAt.time) : "",
+    sc.quizAt ? "📝 الاختبار " + DAYS[sc.quizAt.from.dow] + "–" + DAYS[sc.quizAt.to.dow] : ""].filter(Boolean).join(" · ") : "";
   return `<section class="card sched">
     ${cur && sc && sc.at ? `<div class="next" data-next="${esc(track.id)}"></div>` : ""}
+    ${line ? `<details class="scd"><summary><span>${esc(line)}</span></summary><div class="stack">` : ""}
     ${sc ? `<dl class="sc-grid">
       ${row("موعد المحاضرة", sc.time ? sc.time + " بتوقيت القاهرة" : "")}
       ${row("نزول التسجيل", sc.rec)}
@@ -467,6 +505,7 @@ function scheduleCard(term, track){
     </dl>
     ${(sc.courses||[]).length ? `<ul class="sc-courses">${sc.courses.map(c => `<li><strong>${esc(c.name)}</strong><span>${esc(c.teacher)} · ${c.count} ${c.count <= 10 ? "محاضرات" : "محاضرة"}</span></li>`).join("")}</ul>` : ""}` : ""}
     ${term.finals ? `<p class="finals">الاختبارات النهائية لـ${esc(term.name)}: ${esc(term.finals)}</p>` : ""}
+    ${line ? `</div></details>` : ""}
     ${cur ? linksRow(term, track) : ""}
   </section>`;
 }
@@ -517,11 +556,42 @@ function annStrip(trackId){
 /* ---------- «كمّل من حيث وقفت» ---------- */
 function lastWatched(){ try{ return JSON.parse(store.get("wahy_y1b4_last") || "null"); }catch(e){ return null; } }
 
+/* ---------- «خطوتك الجاية»: أهم شيء واحد الآن ---------- */
+function nextStep(term, now, over){
+  const card = (tag, title, sub, action) => `<section class="nextstep"><small>${tag}</small><b>${title}</b>${sub ? `<span class="sub">${sub}</span>` : ""}${action || ""}</section>`;
+  if(over) return "";
+  const tracks = term.tracks.filter(t => t.schedule && t.schedule.at);
+  const liveT = tracks.find(t => inWindow(now, { dow: t.schedule.at.dow, time: t.schedule.at.start }, { dow: t.schedule.at.dow, time: t.schedule.at.end }));
+  if(liveT) return card("خطوتك الجاية", `🔴 محاضرة ${esc(liveT.name)} منعقدة الآن`, "رابط الحضور في مجموعة المساق على تيليجرام · حتى " + clock(liveT.schedule.at.end));
+  const cand = [];
+  term.tracks.forEach(track => {
+    const sc = track.schedule; if(!track.subjects || !track.subjects.length) return;
+    const k = subjOrder(term, track)[0], sub = track.subjects[k], r = sub && subjectOf(sub); if(!r) return;
+    const ctx = { term: term.id, track: track.id, k, subj: sub.name, current: true }, short = track.name.replace(/^مساق\s+/, "");
+    const l = r.latest;
+    if(l && sc && sc.quizAt && isUrl(l.quiz) && inWindow(now, sc.quizAt.from, sc.quizAt.to)){
+      const left = untilMin(now, sc.quizAt.to.dow, sc.quizAt.to.time);
+      cand.push({ p: 1, w: left, html: card("خطوتك الجاية", `📝 حل اختبار ${esc(sub.name)} · ${esc(l.label)}`, `${esc(short)} · يُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)} · باقي ${fmtLeft(left)}`, btn(l.quiz, "ابدأ الاختبار", "quiz", true)) });
+    }
+    const unseen = [...r.lectures].reverse().find(x => isUrl(x.rec) && !SEEN[lecId(ctx, x)]);
+    if(unseen){
+      const nextLec = sc && sc.at ? untilMin(now, sc.at.dow, sc.at.start) : WEEK;
+      const t = sub.name + " · " + unseen.label + (unseen.title ? ": " + unseen.title : "");
+      cand.push({ p: 2, w: nextLec, html: card("خطوتك الجاية", `▶ شاهد ${esc(sub.name)} · ${esc(unseen.label)}`, `${esc(short)}${unseen.title ? " · " + esc(unseen.title) : ""}${sc && sc.at ? " · قبل محاضرة " + DAYS[sc.at.dow] : ""}`, vidBtn(unseen.rec, "مشاهدة التسجيل", t, lecId(ctx, unseen))) });
+    }
+    if(l && l.tasks.length) cand.push({ p: 3, w: 0, html: card("خطوتك الجاية", `✍️ تكليف ${esc(sub.name)} · ${esc(l.label)}`, esc(short), `<button type="button" class="btn" data-open="${esc(track.id)}" data-k="${k}">عرض التكليف</button>`) });
+  });
+  cand.sort((a, b) => a.p - b.p || a.w - b.w);
+  if(cand.length) return cand[0].html;
+  return card("خطوتك الجاية", "أنت متابع كل حاجة، بارك الله فيك 🌿", "راجع آخر المحاضرات أو استعد للمحاضرة القادمة.");
+}
+
 /* ---------- تبويب «هذا الأسبوع»: كل المساقات في صفحة واحدة ---------- */
 function weekView(){
   const term = TERM_ORDER[0], now = cairoNow(), nowMin = now.dow * 1440 + now.min;
   const out = [annStrip("week")];
   const over = termOver(term);
+  out.push(nextStep(term, now, over));
   if(!over) out.push(`<div class="next" data-next="all"></div>`);
   const last = lastWatched();
   if(last && last.url) { const k = "v" + (++VSEQ); VIDS[k] = { url: last.url, title: last.title, seen: last.id };
@@ -564,12 +634,17 @@ function weekView(){
                      ev.push({ dow: sc.quizAt.to.dow, t: sc.quizAt.to.time, txt: `⏳ قفل اختبار ${short} · ${clock(sc.quizAt.to.time)}` }); }
     });
     const days = [0,1,2,3,4,5,6].map(i => (startDow + i) % 7);
+    const pos = d => (d - startDow + 7) % 7, todayPos = pos(now.dow);
     const rows = days.map(d => {
       const items = ev.filter(e => e.dow === d).sort((a, b) => toMin(a.t) - toMin(b.t));
-      if(!items.length) return "";
-      return `<div class="day${d === now.dow ? " today" : ""}"><b>${DAYS[d]}${d === now.dow ? " · اليوم" : ""}</b><ul>${items.map(e => `<li class="${((d - startDow + 7) % 7) * 1440 + toMin(e.t) < ((now.dow - startDow + 7) % 7) * 1440 + now.min ? "past" : ""}">${esc(e.txt)}</li>`).join("")}</ul></div>`;
-    }).join("");
-    out.push(`<section class="card week"><h3>أجندة الأسبوع</h3><div class="agenda">${rows}</div></section>`);
+      if(!items.length) return null;
+      return { near: pos(d) === todayPos || pos(d) === todayPos + 1, html: `<div class="day${d === now.dow ? " today" : ""}"><b>${DAYS[d]}${d === now.dow ? " · اليوم" : pos(d) === todayPos + 1 ? " · بكرة" : ""}</b><ul>${items.map(e => `<li class="${pos(d) * 1440 + toMin(e.t) < todayPos * 1440 + now.min ? "past" : ""}">${esc(e.txt)}</li>`).join("")}</ul></div>` };
+    }).filter(Boolean);
+    let near = rows.filter(r => r.near);
+    if(!near.length) near = rows.filter((r, i) => i === rows.findIndex(x => !x.near)).slice(0, 1);
+    const rest = rows.filter(r => !near.includes(r));
+    out.push(`<section class="card week"><h3>أجندة الأسبوع</h3><div class="agenda">${near.map(r => r.html).join("")}</div>
+      ${rest.length ? `<details class="more" data-more="agenda"${state.more.agenda ? " open" : ""}><summary>عرض الأسبوع كله</summary><div class="agenda">${rest.map(r => r.html).join("")}</div></details>` : ""}</section>`);
   }
 
   /* جدول الترم */
@@ -612,11 +687,23 @@ function weekCard(term, track){
 }
 
 function drawPickers(){
-  document.getElementById("tracks").innerHTML = `<button class="chip wk" data-track="week" aria-pressed="${state.track === "week"}">📌 هذا الأسبوع</button>` + TERM_ORDER[0].tracks.map(t =>
-    `<button class="chip" data-track="${esc(t.id)}" aria-pressed="${t.id === state.track}">${esc(t.name.replace(/^مساق\s+/, ""))}</button>`).join("");
+  const ICO = { thu:"🌙", fri:"🕌", "sat-am":"☀️", "sat-pm":"🌇" };
+  const short = n => n.replace(/^مساق\s+/, "").replace(/صباحًا$/, "ص").replace(/مساءً$/, "م");
+  document.getElementById("tracks").innerHTML = `<button class="chip wk" data-track="week" aria-pressed="${state.track === "week"}"><i>📌</i><span class="lf">هذا الأسبوع</span><span class="ls">الأسبوع</span></button>` + TERM_ORDER[0].tracks.map(t =>
+    `<button class="chip" data-track="${esc(t.id)}" aria-pressed="${t.id === state.track}"><i>${ICO[t.id] || "📘"}</i><span class="lf">${esc(t.name.replace(/^مساق\s+/, ""))}</span><span class="ls">${esc(short(t.name))}</span></button>`).join("");
 }
 
 /* ترتيب المقررات في الترم الحالي: المقرر الجاري أولًا (آخر مقرر بدأ ولم يكتمل)، ثم الأحدث فالأقدم، ثم ما لم يبدأ بعد */
+/* علامة على تبويب المقرر: ✓ شاهد كل المسجّل (والمقرر مكتمل إن عُرف عدده)، ونقطة لو آخر تسجيل لم يُشاهد */
+function tabMark(term, track, k){
+  if(term.id !== DATA.current) return "";
+  const r = subjectOf(track.subjects[k]); if(!r) return "";
+  const ctx = { term: term.id, track: track.id, k };
+  const rec = r.lectures.filter(l => isUrl(l.rec)); if(!rec.length) return "";
+  if(rec.every(l => SEEN[lecId(ctx, l)])) return `<span class="ok" title="شاهدت كل التسجيلات">✓</span>`;
+  const last = rec[rec.length - 1];
+  return SEEN[lecId(ctx, last)] ? "" : `<span class="dotn" title="تسجيل جديد لم تشاهده"></span>`;
+}
 /* آخر محاضرة ظاهرة، والباقي مطوي */
 function lectureList(r, ctx, sub){
   const list = [...r.lectures].reverse().map(l => lecItem(l, r, "", ctx));
@@ -658,7 +745,7 @@ function subjectBody(term, track){
   }
   return `
     <div class="tabs" role="tablist">${order.map(k =>
-      `<button class="tab" role="tab" data-term="${esc(term.id)}" data-sub="${k}" aria-selected="${k === i}">${esc(track.subjects[k].name)}</button>`).join("")}</div>
+      `<button class="tab" role="tab" data-term="${esc(term.id)}" data-sub="${k}" aria-selected="${k === i}">${esc(track.subjects[k].name)}${tabMark(term, track, k)}</button>`).join("")}</div>
     ${body}`;
 }
 
