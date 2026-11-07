@@ -109,6 +109,55 @@ ol.lectures{list-style:none;margin:0;padding:0;display:flex;flex-direction:colum
 .gate small{color:var(--muted);font-size:12.5px}
 .gate small button{font:inherit;color:var(--brand);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
 
+/* إضافات: العدّاد، المطلوب هذا الأسبوع، شاهدتها، النوافذ */
+.next{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;background:var(--brand-soft);border-radius:10px;padding:10px 14px;font-weight:600;color:var(--brand-deep)}
+.next .cd{font-variant-numeric:tabular-nums;color:var(--brand)}
+.next.live{background:#fde8e6;color:#a2291a}
+.next.live .cd{color:#a2291a}
+.dot{width:9px;height:9px;border-radius:50%;background:#d93025;display:inline-block;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.links-row{display:flex;flex-wrap:wrap;gap:8px}
+.week{padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.week h3{margin:0;font-size:16px;color:var(--brand-deep)}
+.week ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.week li{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:14px}
+.pill{font-size:12px;font-weight:700;border-radius:999px;padding:1px 10px;background:var(--bg);color:var(--muted)}
+.pill.open{background:#e1f3f1;color:#1f7f74}
+.pill.warn{background:var(--gold-soft);color:var(--gold-ink)}
+.lec.seen{background:#fbfdff}
+.lec.seen .num{background:#e1f3f1;color:#1f7f74}
+.btn.seen-btn{background:transparent}
+.btn.seen-btn[aria-pressed="true"]{border-color:#1f7f74;color:#1f7f74;background:#e1f3f1}
+.btn.rate{border-color:var(--gold);background:var(--gold-soft);color:var(--gold-ink);font-weight:600;cursor:pointer;font-family:inherit}
+.btn.rate.done{background:transparent;border-color:var(--line);color:var(--muted)}
+button.btn{cursor:pointer;font-family:inherit}
+.modal{position:fixed;inset:0;background:rgba(10,22,40,.6);z-index:50;display:flex;align-items:center;justify-content:center;padding:14px}
+.mbox{background:var(--surface);border-radius:14px;width:min(860px,100%);max-height:92vh;overflow:auto;border-top:4px solid var(--gold)}
+.mhead{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:1}
+.mhead b{flex:1;font-size:15px}
+.mx{font:inherit;font-size:20px;line-height:1;border:0;background:var(--bg);border-radius:8px;width:34px;height:34px;cursor:pointer;color:var(--ink)}
+.vwrap{position:relative;padding-top:56.25%;background:#000}
+.vwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vfoot{padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+#rate-f{padding:14px 16px 18px;display:flex;flex-direction:column;gap:14px}
+#rate-f fieldset{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0}
+#rate-f legend{font-weight:600;font-size:14px;padding:0 4px}
+#rate-f .rmiss{border-color:#d93025;background:#fff6f5}
+.rpills,.rchips{display:flex;flex-wrap:wrap;gap:6px}
+.rpills label,.rchips label{cursor:pointer}
+.rpills input,.rchips input{position:absolute;opacity:0;pointer-events:none}
+.rpills span,.rchips span{display:inline-block;border:1px solid var(--line);border-radius:8px;padding:4px 11px;font-size:14px;min-width:34px;text-align:center}
+.rpills input:checked+span,.rchips input:checked+span{background:var(--brand);border-color:var(--brand);color:#fff}
+.rpills input:focus-visible+span,.rchips input:focus-visible+span{outline:2px solid var(--gold)}
+.rends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px}
+.rtxt{display:flex;flex-direction:column;gap:4px;font-weight:600;font-size:14px}
+.rtxt.rmiss textarea{border-color:#d93025}
+.rtxt textarea{font:inherit;font-weight:400;border:1px solid var(--line);border-radius:8px;padding:8px 10px;resize:vertical}
+.rsec{margin:4px 0 0;color:var(--brand-deep);font-size:15px}
+.rnote{margin:0;color:var(--muted);font-size:13px}
+.rsend{align-self:flex-start;background:var(--brand);color:#fff;border:0;border-radius:9px;padding:9px 22px;font:inherit;font-weight:700;cursor:pointer}
+.rsend:disabled{opacity:.6}
+
 footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:12px;display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:space-between}
 footer a{color:var(--brand);font-weight:600;text-decoration:none}
 </style>
@@ -152,6 +201,22 @@ footer a{color:var(--brand);font-weight:600;text-decoration:none}
   </footer>
 </div>
 
+<div class="modal" id="vid-modal" hidden>
+  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="vid-t">
+    <div class="mhead"><b id="vid-t"></b><button type="button" class="mx" id="vid-x" aria-label="إغلاق">×</button></div>
+    <div class="vwrap" id="vid-f"></div>
+    <div class="vfoot"><span>تُحسب المحاضرة «شاهدتها» تلقائيًا عند فتح التسجيل.</span><a class="btn" id="vid-l" href="#" target="_blank" rel="noopener">فتح على يوتيوب</a></div>
+  </div>
+</div>
+<div class="modal" id="rate-modal" hidden>
+  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="rate-t">
+    <div class="mhead"><b id="rate-t">تقييم المحاضرة</b><button type="button" class="mx" id="rate-x" aria-label="إغلاق">×</button></div>
+    <p class="rnote" id="rate-s" style="padding:10px 16px 0"></p>
+    <form id="rate-f" novalidate></form>
+    <div class="mmsg" id="rate-msg" style="padding:0 16px 16px" role="status"></div>
+  </div>
+</div>
+
 <script>
 /* ===================== الإعدادات =====================
    لا تُكتب هنا أي روابط أو معرّفات شيتات: كل البيانات تصل من السكربت بعد التحقق من الطالب. */
@@ -179,6 +244,40 @@ const state = { track: "thu", sub: {}, open: {}, q: "" };
 let DATA = null;          // { current, terms:[{id,name,finals,tracks:[{id,name,schedule,subjects:[{name,total,rows}]}]}] }
 let TERM_ORDER = [];
 const parsed = new WeakMap();
+let EXTRA = { tg: {}, rated: [] };   // روابط مجموعات تيليجرام + المحاضرات التي قيّمها الطالب
+
+/* ---------- الوقت بتوقيت القاهرة ---------- */
+const DAYS = ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+function cairoNow(){
+  const f = new Intl.DateTimeFormat("en-US", { timeZone:"Africa/Cairo", weekday:"short", year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", second:"2-digit", hourCycle:"h23" });
+  const p = {}; f.formatToParts(new Date()).forEach(x => p[x.type] = x.value);
+  const dow = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(p.weekday);
+  return { dow, min: (+p.hour) * 60 + (+p.minute), sec: +p.second, ymd: p.year + "-" + p.month + "-" + p.day };
+}
+const toMin = t => { const a = String(t).split(":"); return (+a[0]) * 60 + (+(a[1] || 0)); };
+const WEEK = 7 * 1440;
+const weekMin = (dow, t) => dow * 1440 + toMin(t);
+/* دقائق متبقية حتى نقطة أسبوعية (0 إن كانت الآن) */
+function untilMin(now, dow, t){ let d = weekMin(dow, t) - (now.dow * 1440 + now.min); if(d < 0) d += WEEK; return d; }
+function inWindow(now, from, to){ const n = now.dow * 1440 + now.min, a = weekMin(from.dow, from.time), b = weekMin(to.dow, to.time); return a <= b ? (n >= a && n < b) : (n >= a || n < b); }
+function fmtLeft(mins, sec){
+  const d = Math.floor(mins / 1440), h = Math.floor(mins % 1440 / 60), m = mins % 60;
+  const parts = [];
+  if(d) parts.push(d === 1 ? "يوم" : d === 2 ? "يومين" : d + (d <= 10 ? " أيام" : " يومًا"));
+  if(h) parts.push(h === 1 ? "ساعة" : h === 2 ? "ساعتين" : h + (h <= 10 ? " ساعات" : " ساعة"));
+  if(!d) parts.push(m + " دقيقة");
+  return parts.join(" و");
+}
+const clock = t => { const m = toMin(t), h = Math.floor(m / 60), mm = m % 60, h12 = h % 12 || 12; return h12 + (mm ? ":" + String(mm).padStart(2, "0") : "") + (h < 12 ? " ص" : h === 12 ? " ظ" : " م"); };
+function termOver(term){ return term.until && cairoNow().ymd > term.until; }
+
+/* ---------- شاهدتها (تُحفظ على جهاز الطالب فقط) ---------- */
+let SEEN = {}; try{ SEEN = JSON.parse(store.get("wahy_y1b4_seen") || "{}") || {}; }catch(e){ SEEN = {}; }
+const lecId = (ctx, l) => ctx ? ctx.term + "|" + ctx.track + "|" + ctx.k + "|" + l.n : "";
+function setSeen(id, on){ if(!id) return; if(on) SEEN[id] = 1; else delete SEEN[id]; store.set("wahy_y1b4_seen", JSON.stringify(SEEN)); }
+const ytId = u => { const m = String(u || "").match(/(?:youtu\.be\/|v=|\/embed\/|\/live\/|\/shorts\/)([A-Za-z0-9_-]{11})/); return m ? m[1] : ""; };
+const VIDS = {};   // معرّف زر الفيديو ← {url, title, seen}
+let VSEQ = 0;
 
 /* ---------- تحويل صفوف الشيت إلى محاضرات ---------- */
 const ORDW = ["الاولي","الثانيه","الثالثه","الرابعه","الخامسه","السادسه","السابعه","الثامنه","التاسعه","العاشره","الحاديه عشر","الثانيه عشر","الثالثه عشر","الرابعه عشر","الخامسه عشر","السادسه عشر","السابعه عشر","الثامنه عشر","التاسعه عشر","العشرون"];
@@ -278,17 +377,29 @@ const taskList = l => !l.tasks.length ? "" : `
     <li><span class="t-text">${ICON.task}${t.text ? esc(t.text) : (l.tasks.length > 1 ? "تكليف " + (i + 1) : "التكليف")}</span>
       ${t.urls.map((u, k) => `<a class="t-link" href="${esc(fixUrl(u))}" target="_blank" rel="noopener">${t.urls.length > 1 ? "الرابط " + (k + 1) : "فتح الرابط"}</a>`).join("")}</li>`).join("")}
   </ul>`;
-const lecActions = (l, s) =>
-  btn(l.rec, "مشاهدة التسجيل", "play", true) +
-  l.extra.filter(x => x.icon === "play").map(x => btn(x.url, x.name, "play", true)).join("") +
+function vidBtn(url, label, title, id){
+  if(!isUrl(url) || !ytId(url)) return btn(url, label, "play", true);
+  const k = "v" + (++VSEQ); VIDS[k] = { url, title, seen: id };
+  return `<button type="button" class="btn main" data-vid="${k}">${ICON.play}${esc(label)}</button>`;
+}
+function rateBtn(id, l, ctx){
+  if(!ctx || !ctx.current || !isUrl(l.rec)) return "";
+  const done = EXTRA.rated.includes(id);
+  return `<button type="button" class="btn rate${done ? " done" : ""}" data-rate="${esc(id)}" data-rt="${esc(ctx.subj + " · " + l.label + (l.title ? ": " + l.title : ""))}">${done ? "✓ قيّمتها · تعديل" : "★ قيّم المحاضرة"}</button>`;
+}
+const lecActions = (l, s, ctx) =>
+  vidBtn(l.rec, "مشاهدة التسجيل", (ctx ? ctx.subj + " · " : "") + l.label + (l.title ? ": " + l.title : ""), lecId(ctx, l)) +
+  l.extra.filter(x => x.icon === "play").map(x => vidBtn(x.url, x.name, x.name, lecId(ctx, l))).join("") +
   s.perLecture.map(k => btn(l.files[k].val, l.files[k].name, "file", false, true)).join("") +
   btn(l.quiz, "الاختبار", "quiz", false, s.showQuiz) +
-  l.extra.filter(x => x.icon !== "play").map(x => btn(x.url, x.name, x.icon)).join("");
-const lecItem = (l, s, subjName) => `
-  <li class="lec">
+  l.extra.filter(x => x.icon !== "play").map(x => btn(x.url, x.name, x.icon)).join("") +
+  (ctx && isUrl(l.rec) ? `<button type="button" class="btn seen-btn" data-seen="${esc(lecId(ctx, l))}" aria-pressed="${!!SEEN[lecId(ctx, l)]}">${SEEN[lecId(ctx, l)] ? "✓ شاهدتها" : "شاهدتها؟"}</button>` : "") +
+  rateBtn(lecId(ctx, l), l, ctx);
+const lecItem = (l, s, subjName, ctx) => `
+  <li class="lec${ctx && SEEN[lecId(ctx, l)] ? " seen" : ""}">
     <div class="num">${l.n}</div>
     <div class="lec-title"><small>${subjName ? esc(subjName) + " · " : ""}${esc(l.label)}</small><strong>${esc(l.title || "—")}${s.latest === l ? '<span class="new">جديد</span>' : ""}</strong></div>
-    <div class="actions">${lecActions(l, s)}</div>
+    <div class="actions">${lecActions(l, s, ctx)}</div>
     ${taskList(l)}
   </li>`;
 
@@ -296,7 +407,9 @@ function scheduleCard(term, track){
   const sc = track.schedule;
   if(!sc && !term.finals) return "";
   const row = (k, v) => v ? `<div class="sc-row"><dt>${k}</dt><dd>${esc(v)}</dd></div>` : "";
+  const cur = term.id === DATA.current && !termOver(term);
   return `<section class="card sched">
+    ${cur && sc && sc.at ? `<div class="next" data-next="${esc(track.id)}"></div>` : ""}
     ${sc ? `<dl class="sc-grid">
       ${row("موعد المحاضرة", sc.time ? sc.time + " بتوقيت القاهرة" : "")}
       ${row("نزول التسجيل", sc.rec)}
@@ -304,9 +417,62 @@ function scheduleCard(term, track){
     </dl>
     ${(sc.courses||[]).length ? `<ul class="sc-courses">${sc.courses.map(c => `<li><strong>${esc(c.name)}</strong><span>${esc(c.teacher)} · ${c.count} ${c.count <= 10 ? "محاضرات" : "محاضرة"}</span></li>`).join("")}</ul>` : ""}` : ""}
     ${term.finals ? `<p class="finals">الاختبارات النهائية لـ${esc(term.name)}: ${esc(term.finals)}</p>` : ""}
+    ${cur ? linksRow(term, track) : ""}
   </section>`;
 }
 const trackIn = (term, id) => term.tracks.find(t => t.id === id);
+
+/* زر التقويم (موعد أسبوعي متكرر حتى نهاية الترم) وزر مجموعة المساق على تيليجرام */
+function calUrl(term, track){
+  const at = track.schedule && track.schedule.at; if(!at) return "";
+  const now = cairoNow(), add = Math.floor(untilMin(now, at.dow, at.start) / 1440);
+  const d = new Date(Date.UTC(+now.ymd.slice(0, 4), +now.ymd.slice(5, 7) - 1, +now.ymd.slice(8, 10) + add));
+  const ymd = d.toISOString().slice(0, 10).replace(/-/g, "");
+  const hm = t => t.replace(":", "") + "00";
+  const until = (term.until || "").replace(/-/g, "");
+  const q = new URLSearchParams({ action:"TEMPLATE", text: track.name + " — الدراسة النظامية (السنة الأولى)", dates: ymd + "T" + hm(at.start) + "/" + ymd + "T" + hm(at.end), ctz:"Africa/Cairo",
+    details: "أكاديمية وحي — روابط التسجيلات والملفات: " + location.href.split("#")[0] + "#" + track.id });
+  if(until) q.set("recur", "RRULE:FREQ=WEEKLY;UNTIL=" + until + "T235959Z");
+  return "https://calendar.google.com/calendar/render?" + q.toString();
+}
+function linksRow(term, track){
+  const out = [], c = calUrl(term, track), tg = EXTRA.tg[track.id];
+  if(tg) out.push(`<a class="btn main" href="${esc(tg)}" target="_blank" rel="noopener">✈ مجموعة ${esc(track.name)} على تيليجرام</a>`);
+  if(c) out.push(`<a class="btn" href="${esc(c)}" target="_blank" rel="noopener">📅 أضف مواعيد المساق لتقويمي</a>`);
+  return out.length ? `<div class="links-row">${out.join("")}</div>` : "";
+}
+/* العدّاد: يُحدَّث كل 30 ثانية دون إعادة رسم الصفحة */
+function tickNext(){
+  document.querySelectorAll("[data-next]").forEach(el => {
+    const term = TERM_ORDER[0], track = term && trackIn(term, el.dataset.next), at = track && track.schedule && track.schedule.at;
+    if(!at) return;
+    const now = cairoNow(), live = inWindow(now, { dow: at.dow, time: at.start }, { dow: at.dow, time: at.end });
+    el.classList.toggle("live", live);
+    el.innerHTML = live ? `<span class="dot"></span> المحاضرة منعقدة الآن حتى ${clock(at.end)} · الرابط في مجموعة المساق على تيليجرام`
+      : `المحاضرة القادمة: ${DAYS[at.dow]} ${clock(at.start)} · <span class="cd">بعد ${fmtLeft(untilMin(now, at.dow, at.start), now.sec)}</span>`;
+  });
+}
+
+/* «مطلوب منك الأسبوع ده»: الاختبار التنشيطي + تكليفات آخر محاضرة + ما لم تشاهده */
+function weekCard(term, track){
+  const sc = track.schedule; if(!sc || termOver(term)) return "";
+  const now = cairoNow(), items = [];
+  track.subjects.forEach((sub, k) => {
+    const r = subjectOf(sub); if(!r || !r.latest) return;
+    const l = r.latest, ctx = { term: term.id, track: track.id, k, subj: sub.name, current: true };
+    if(sc.quizAt && isUrl(l.quiz)){
+      const open = inWindow(now, sc.quizAt.from, sc.quizAt.to);
+      items.push(`<li><span class="pill ${open ? "open" : ""}">${open ? "مفتوح الآن" : "يُفتح " + DAYS[sc.quizAt.from.dow] + " " + clock(sc.quizAt.from.time)}</span>
+        اختبار ${esc(sub.name)} · ${esc(l.label)}${open ? ` <small style="color:var(--muted)">حتى ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)}</small>` : ""}
+        ${open ? btn(l.quiz, "ابدأ الاختبار", "quiz", true) : ""}</li>`);
+    }
+    if(l.tasks.length) items.push(`<li><span class="pill warn">تكليف</span> ${esc(sub.name)} · ${esc(l.label)}: ${l.tasks.length === 1 ? "تكليف واحد" : l.tasks.length + " تكليفات"} <button type="button" class="btn" data-goto="${k}" data-term="${esc(term.id)}">عرض</button></li>`);
+    const unseen = r.lectures.filter(x => isUrl(x.rec) && !SEEN[lecId(ctx, x)]).length;
+    if(unseen) items.push(`<li><span class="pill">لم تشاهدها</span> ${esc(sub.name)}: ${unseen} ${unseen === 1 ? "محاضرة" : unseen <= 10 ? "محاضرات" : "محاضرة"} <button type="button" class="btn" data-goto="${k}" data-term="${esc(term.id)}">عرض</button></li>`);
+  });
+  if(!items.length) return "";
+  return `<section class="card week"><h3>مطلوب منك الأسبوع ده</h3><ul>${items.join("")}</ul></section>`;
+}
 
 function drawPickers(){
   document.getElementById("tracks").innerHTML = TERM_ORDER[0].tracks.map(t =>
@@ -317,6 +483,7 @@ function subjectBody(term, track){
   let i = state.sub[term.id] || 0;
   if(i >= track.subjects.length) i = 0;
   const sub = track.subjects[i], r = subjectOf(sub);
+  const ctx = { term: term.id, track: track.id, k: i, subj: sub.name, current: term.id === DATA.current };
   let body;
   if(!r) body = `<div class="msg">تعذّر تحميل ${esc(sub.name)}. حدّث الصفحة بعد قليل.</div>`;
   else {
@@ -324,9 +491,9 @@ function subjectBody(term, track){
     r.shared.forEach(x => top.push(`<a class="ref" href="${esc(x.url)}" target="_blank" rel="noopener">${ICON.file}${esc(x.name)} (للمقرر كله)</a>`));
     r.refs.forEach(x => top.push(`<a class="ref" href="${esc(x.url)}" target="_blank" rel="noopener">${ICON.folder}${esc(x.label)}</a>`));
     body = `
-      <div class="meta"><span>مقرر ${esc(sub.name)}</span><span>${sub.total ? `${r.lectures.length} من ${sub.total} محاضرة` : `${r.lectures.length} محاضرة`}</span></div>
+      <div class="meta"><span>مقرر ${esc(sub.name)}</span><span>${sub.total ? `${r.lectures.length} من ${sub.total} محاضرة` : `${r.lectures.length} محاضرة`}${(() => { const w = r.lectures.filter(x => SEEN[lecId(ctx, x)]).length; return w ? ` · شاهدت ${w}` : ""; })()}</span></div>
       ${top.length ? `<div class="ref-grid">${top.join("")}</div>` : ""}
-      ${r.lectures.length ? `<ol class="lectures">${[...r.lectures].reverse().map(l => lecItem(l, r)).join("")}</ol>`
+      ${r.lectures.length ? `<ol class="lectures">${[...r.lectures].reverse().map(l => lecItem(l, r, "", ctx)).join("")}</ol>`
                          : `<div class="msg">لم تُضف محاضرات ${esc(sub.name)} بعد.</div>`}`;
   }
   return `
@@ -340,7 +507,7 @@ function termSection(term, track, isNewest){
   if(!track || !track.subjects || !track.subjects.length) inner = `<div class="msg">روابط هذا الترم ستُضاف قريبًا إن شاء الله.</div>`;
   else if(track.subjects.every(s => !Array.isArray(s.rows))) inner = `<div class="msg">تعذّر تحميل الروابط الآن. حدّث الصفحة بعد قليل.</div>`;
   else inner = subjectBody(term, track);
-  const content = `${track ? scheduleCard(term, track) : ""}${inner}`;
+  const content = `${track ? scheduleCard(term, track) : ""}${isNewest && track && track.subjects && track.subjects.length ? weekCard(term, track) : ""}${inner}`;
   if(isNewest) return `<section class="term stack"><h2>${esc(term.name)} <span class="cur">الحالي</span></h2>${content}</section>`;
   return `<details class="term old" data-old="${esc(term.id)}"${state.open[term.id] ? " open" : ""}>
     <summary><h2>${esc(term.name)}</h2><span class="hint">تسجيلات وملفات ${esc(term.name)} للمراجعة</span></summary>
@@ -353,15 +520,17 @@ function drawMain(){
   if(state.q.trim()){
     const q = norm(state.q.trim());
     const hits = [];
-    pairs.forEach(p => p.track && p.track.subjects.forEach(sub => {
+    pairs.forEach(p => p.track && p.track.subjects.forEach((sub, k) => {
       const r = subjectOf(sub); if(!r) return;
-      r.lectures.forEach(l => { if(norm(l.title).includes(q)) hits.push(lecItem(l, r, p.term.name + " · " + sub.name)); });
+      const ctx = { term: p.term.id, track: p.track.id, k, subj: sub.name, current: p.term.id === DATA.current };
+      r.lectures.forEach(l => { if(norm(l.title).includes(q)) hits.push(lecItem(l, r, p.term.name + " · " + sub.name, ctx)); });
     }));
     main.innerHTML = `<div class="stack"><div class="meta"><span>نتائج البحث في ${esc(pairs[0].track ? pairs[0].track.name : "")}</span><span>${hits.length} نتيجة</span></div>
       ${hits.length ? `<ol class="lectures">${hits.join("")}</ol>` : `<div class="msg">لا توجد محاضرة بهذا الاسم في هذا المساق.</div>`}</div>`;
     return;
   }
   main.innerHTML = `<div class="stack">${pairs.map((p, k) => termSection(p.term, p.track, k === 0)).join("")}</div>`;
+  tickNext();
 }
 
 function render(){ drawPickers(); drawMain(); }
@@ -378,6 +547,7 @@ const fromHash = h => { const m = (h || "").replace("#","").match(/^(?:t\d+-)?([
 /* ---------- البيانات والدخول ---------- */
 function setData(d){
   DATA = { current: d.current, terms: d.terms || [] };
+  EXTRA = { tg: d.tg || {}, rated: d.rated || [] };
   TERM_ORDER = [...DATA.terms].sort((a, b) => (a.id === DATA.current ? -1 : b.id === DATA.current ? 1 : b.id.localeCompare(a.id)));
   if(!TERM_ORDER.length || !TERM_ORDER[0].tracks.length) return false;
   return true;
@@ -401,7 +571,7 @@ function showGate(){
 function saveLogin(d){
   store.set(KEY.ses, d.session || store.get(KEY.ses));
   store.set(KEY.mail, d.email || "");
-  try{ store.set(KEY.data, JSON.stringify({ current: d.current, terms: d.terms, at: Date.now() })); }catch(e){ store.set(KEY.data, ""); }
+  try{ store.set(KEY.data, JSON.stringify({ current: d.current, terms: d.terms, tg: d.tg || {}, rated: d.rated || [], at: Date.now() })); }catch(e){ store.set(KEY.data, ""); }
 }
 function logout(){ [KEY.ses, KEY.mail, KEY.data].forEach(k => store.set(k, "")); try{ google.accounts.id.disableAutoSelect(); }catch(e){} showGate(); }
 function setMsg(cls, html){ const m = document.getElementById("me-msg"); m.className = "mmsg " + cls; m.innerHTML = html; }
@@ -469,6 +639,80 @@ document.getElementById("main").addEventListener("toggle", e => {
 let qt; document.getElementById("q").addEventListener("input", e => { clearTimeout(qt); qt = setTimeout(() => { state.q = e.target.value; if(DATA) drawMain(); }, 200); });
 window.addEventListener("hashchange", () => { const t = fromHash(location.hash); if(DATA && t && t !== state.track) go(t); });
 document.getElementById("logout").addEventListener("click", logout);
+/* ---------- الفيديو داخل الصفحة ---------- */
+function openVid(k){
+  const v = VIDS[k]; if(!v) return;
+  document.getElementById("vid-t").textContent = v.title || "التسجيل";
+  document.getElementById("vid-l").href = v.url;
+  document.getElementById("vid-f").innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${ytId(v.url)}?rel=0&modestbranding=1&autoplay=1" title="تسجيل المحاضرة" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  document.getElementById("vid-modal").hidden = false;
+  if(v.seen && !SEEN[v.seen]){ setSeen(v.seen, true); }
+}
+function closeVid(){ const m = document.getElementById("vid-modal"); if(m.hidden) return; m.hidden = true; document.getElementById("vid-f").innerHTML = ""; if(DATA) drawMain(); }
+
+/* ---------- تقييم المحاضرة ---------- */
+const RQ = [["overall","التقييم العام للمحاضرة"],["content","وضوح المحتوى وتنظيمه"],["delivery","أسلوب الشيخ في العرض"],["outcomes","إلى أي حد استفدت من المحاضرة؟"],["tech","جودة الصوت والبث / التسجيل"]];
+const RO = [["org","تنظيم المحاضرة (الالتزام بالموعد وسهولة الدخول)"],["links","وصول رابط الحضور والتنبيهات في وقتها"],["sa","متابعة شئون الطلاب والرد على استفساراتك"]];
+const RT = [["benefit","أبرز ما استفدته من المحاضرة"],["improve","ما الذي كان يمكن تحسينه؟"],["wish","موضوع تتمنى التوسع فيه لاحقًا"],["question","سؤال أو استفسار للشيخ","اكتب «لا يوجد» إن لم يكن لديك سؤال"]];
+const RT2 = [["orgnote","ملاحظاتك على التنظيم ومتابعة شئون الطلاب","اكتب «لا يوجد» إن لم تكن لديك ملاحظات"]];
+const RA = ["حضرت البث المباشر","شاهدت التسجيل","حضرت جزءًا وأكملت من التسجيل"];
+let RID = "";
+const arNum = n => String(n).replace(/\d/g, d => "٠١٢٣٤٥٦٧٨٩"[d]);
+function rPills(name, lo, hi){ let h = '<div class="rpills">'; for(let i = lo; i <= hi; i++) h += `<label><input type="radio" name="${name}" value="${i}"><span>${arNum(i)}</span></label>`; return h + "</div>"; }
+function openRate(id, title){
+  RID = id;
+  document.getElementById("rate-s").textContent = title;
+  const sc = q => `<fieldset data-q="${q[0]}"><legend>${q[1]}</legend>${rPills(q[0], 1, 5)}<div class="rends"><span>ضعيف</span><span>ممتاز</span></div></fieldset>`;
+  const tx = t => `<label class="rtxt" data-q="${t[0]}"><span>${t[1]}</span><textarea name="${t[0]}" rows="2" maxlength="600"${t[2] ? ` placeholder="${t[2]}"` : ""}></textarea></label>`;
+  let h = '<p class="rnote">جميع الأسئلة مطلوبة، ولا يستغرق التقييم أكثر من دقيقتين.</p><h4 class="rsec">أولًا: تقييم المحاضرة</h4>';
+  h += `<fieldset data-q="attended"><legend>كيف تابعت المحاضرة؟</legend><div class="rchips">${RA.map(a => `<label><input type="radio" name="attended" value="${esc(a)}"><span>${esc(a)}</span></label>`).join("")}</div></fieldset>`;
+  h += RQ.map(sc).join("");
+  h += `<fieldset data-q="nps"><legend>ما مدى ترشيحك لهذه المحاضرة لزميل؟</legend>${rPills("nps", 0, 10)}<div class="rends"><span>لن أرشحها</span><span>بالتأكيد</span></div></fieldset>`;
+  h += RT.map(tx).join("");
+  h += '<h4 class="rsec">ثانيًا: التنظيم ومتابعة شئون الطلاب</h4>' + RO.map(sc).join("") + RT2.map(tx).join("");
+  h += '<button type="submit" class="rsend">إرسال التقييم</button>';
+  const f = document.getElementById("rate-f"); f.innerHTML = h;
+  const m = document.getElementById("rate-msg"); m.className = "mmsg"; m.textContent = "";
+  document.getElementById("rate-modal").hidden = false; f.parentNode.scrollTop = 0;
+}
+function closeRate(){ document.getElementById("rate-modal").hidden = true; }
+function sendRate(e){
+  e.preventDefault();
+  const f = e.target, m = document.getElementById("rate-msg"), ses = store.get(KEY.ses);
+  const o = { action:"rate", session: ses, lecture: RID }; new FormData(f).forEach((v, k) => { o[k] = v; });
+  const need = ["attended", ...RQ.map(q => q[0]), "nps", ...RT.map(t => t[0]), ...RO.map(q => q[0]), ...RT2.map(t => t[0])];
+  f.querySelectorAll(".rmiss").forEach(x => x.classList.remove("rmiss"));
+  const miss = need.filter(k => !String(o[k] || "").trim());
+  if(miss.length){
+    miss.forEach(k => { const el = f.querySelector(`[data-q="${k}"]`); if(el) el.classList.add("rmiss"); });
+    const first = f.querySelector(`[data-q="${miss[0]}"]`); if(first) first.scrollIntoView({ behavior:"smooth", block:"center" });
+    m.className = "mmsg bad"; m.textContent = "من فضلك أجب عن كل الأسئلة (المظلّلة بالأحمر)."; return;
+  }
+  const b = f.querySelector(".rsend"); b.disabled = true; m.className = "mmsg"; m.textContent = "جارٍ الإرسال…";
+  fetch(CONFIG.verifyUrl, { method:"POST", body: new URLSearchParams(o) }).then(r => r.json()).then(d => {
+    b.disabled = false;
+    if(d && d.ok){ EXTRA.rated = d.rated || EXTRA.rated.concat(RID); m.className = "mmsg good"; m.textContent = "جزاك الله خيرًا، وصل تقييمك ✓"; setTimeout(() => { closeRate(); drawMain(); }, 1200); }
+    else if(d && d.reason === "missing"){ m.className = "mmsg bad"; m.textContent = "من فضلك أجب عن كل الأسئلة."; }
+    else if(d && d.reason === "expired"){ m.className = "mmsg bad"; m.textContent = "انتهت جلستك، ادخل مرة أخرى بحساب جوجل."; setTimeout(() => { closeRate(); logout(); }, 1500); }
+    else { m.className = "mmsg bad"; m.textContent = "تعذّر الإرسال الآن، حاول بعد قليل."; }
+  }).catch(() => { b.disabled = false; m.className = "mmsg bad"; m.textContent = "تعذّر الاتصال، تأكد من الإنترنت وحاول مرة أخرى."; });
+}
+
+document.addEventListener("click", e => {
+  const v = e.target.closest("[data-vid]"); if(v){ e.preventDefault(); openVid(v.dataset.vid); return; }
+  const r = e.target.closest("[data-rate]"); if(r){ e.preventDefault(); openRate(r.dataset.rate, r.dataset.rt); return; }
+  const s = e.target.closest("[data-seen]"); if(s){ setSeen(s.dataset.seen, !SEEN[s.dataset.seen]); drawMain(); return; }
+  const g = e.target.closest("[data-goto]"); if(g){ state.sub[g.dataset.term] = +g.dataset.goto; drawMain(); const t = document.querySelector(".tabs"); if(t) t.scrollIntoView({ behavior:"smooth", block:"start" }); return; }
+});
+document.getElementById("vid-x").addEventListener("click", closeVid);
+document.getElementById("vid-modal").addEventListener("click", e => { if(e.target.id === "vid-modal") closeVid(); });
+document.getElementById("rate-x").addEventListener("click", closeRate);
+document.getElementById("rate-modal").addEventListener("click", e => { if(e.target.id === "rate-modal") closeRate(); });
+document.getElementById("rate-f").addEventListener("submit", sendRate);
+document.getElementById("rate-f").addEventListener("input", e => { const q = e.target.closest && e.target.closest("[data-q]"); if(q) q.classList.remove("rmiss"); });
+document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeVid(); closeRate(); } });
+setInterval(tickNext, 30000);
+
 document.getElementById("g-copy").addEventListener("click", function(){
   const u = location.href.split("#")[0], b = this;
   (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(() => { b.textContent = "تم النسخ ✓"; }, () => { b.textContent = u; });
