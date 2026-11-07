@@ -185,6 +185,25 @@ details.more[open] summary{margin-bottom:10px}
   .sched,.week{padding:12px 13px}
   h2{font-size:21px}
 }
+
+.chip.wk{border-color:var(--gold);background:var(--gold-soft);color:var(--gold-ink)}
+.chip.wk[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:var(--brand-deep)}
+.ann{background:var(--gold-soft);border:1px solid #f0d9a6;border-right:4px solid var(--gold);border-radius:10px;padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.ann p{margin:0;font-weight:600;color:var(--gold-ink);font-size:14px}
+.resume{font:inherit;font-weight:600;text-align:right;display:flex;gap:6px;align-items:center;background:var(--surface);border:1px solid var(--brand);color:var(--brand);border-radius:10px;padding:10px 14px;cursor:pointer}
+.resume span{color:var(--ink);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.week .wt{flex:1;min-width:0}
+.agenda{display:flex;flex-direction:column;gap:8px}
+.day{border-right:3px solid var(--line);padding:2px 10px 2px 0}
+.day.today{border-color:var(--gold)}
+.day b{font-size:14px;color:var(--brand-deep)}
+.day ul{list-style:none;margin:2px 0 0;padding:0;display:flex;flex-direction:column;gap:2px;font-size:13.5px}
+.day li.past{color:var(--off);text-decoration:line-through}
+.tt{width:100%;border-collapse:collapse;font-size:13.5px}
+.tt th{text-align:right;color:var(--muted);font-size:12px;font-weight:600;padding:4px 6px;border-bottom:1px solid var(--line)}
+.tt td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.tt td small{display:block;color:var(--muted);font-size:12px}
+.lnk{font:inherit;font-weight:700;color:var(--brand);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
 footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:12px;display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:space-between}
 footer a{color:var(--brand);font-weight:600;text-decoration:none}
 </style>
@@ -271,7 +290,7 @@ const state = { track: "thu", sub: {}, open: {}, more: {}, q: "" };
 let DATA = null;          // { current, terms:[{id,name,finals,tracks:[{id,name,schedule,subjects:[{name,total,rows}]}]}] }
 let TERM_ORDER = [];
 const parsed = new WeakMap();
-let EXTRA = { tg: {}, rated: [] };   // روابط مجموعات تيليجرام + المحاضرات التي قيّمها الطالب
+let EXTRA = { tg: {}, rated: [], ann: [] };   // روابط مجموعات تيليجرام + المحاضرات التي قيّمها الطالب
 
 /* ---------- الوقت بتوقيت القاهرة ---------- */
 const DAYS = ["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
@@ -412,7 +431,7 @@ function vidBtn(url, label, title, id){
 function rateBtn(id, l, ctx){
   if(!ctx || !ctx.current || !isUrl(l.rec)) return "";
   const done = EXTRA.rated.includes(id);
-  return `<button type="button" class="btn rate${done ? " done" : ""}" data-rate="${esc(id)}" data-rt="${esc(ctx.subj + " · " + l.label + (l.title ? ": " + l.title : ""))}">${done ? "✓ قيّمتها" : "★ قيّم"}</button>`;
+  return `<button type="button" class="btn rate${done ? " done" : ""}" data-rate="${esc(id)}" data-rt="${esc(ctx.subj + " · " + l.label + (l.title ? ": " + l.title : ""))}">${done ? "✓ قيّمتها · تعديل" : "★ قيّم المحاضرة واسأل المحاضر"}</button>`;
 }
 const lecActions = (l, s, ctx) =>
   vidBtn(l.rec, "مشاهدة التسجيل", (ctx ? ctx.subj + " · " : "") + l.label + (l.title ? ": " + l.title : ""), lecId(ctx, l)) +
@@ -471,13 +490,100 @@ function linksRow(term, track){
 /* العدّاد: يُحدَّث كل 30 ثانية دون إعادة رسم الصفحة */
 function tickNext(){
   document.querySelectorAll("[data-next]").forEach(el => {
-    const term = TERM_ORDER[0], track = term && trackIn(term, el.dataset.next), at = track && track.schedule && track.schedule.at;
-    if(!at) return;
-    const now = cairoNow(), live = inWindow(now, { dow: at.dow, time: at.start }, { dow: at.dow, time: at.end });
-    el.classList.toggle("live", live);
-    el.innerHTML = live ? `<span class="dot"></span> المحاضرة منعقدة الآن حتى ${clock(at.end)} · الرابط في مجموعة المساق على تيليجرام`
-      : `المحاضرة القادمة: ${DAYS[at.dow]} ${clock(at.start)} · <span class="cd">بعد ${fmtLeft(untilMin(now, at.dow, at.start), now.sec)}</span>`;
+    const term = TERM_ORDER[0]; if(!term) return;
+    const now = cairoNow();
+    const tracks = el.dataset.next === "all" ? term.tracks : [trackIn(term, el.dataset.next)];
+    const list = tracks.filter(t => t && t.schedule && t.schedule.at).map(t => ({ t, at: t.schedule.at,
+      live: inWindow(now, { dow: t.schedule.at.dow, time: t.schedule.at.start }, { dow: t.schedule.at.dow, time: t.schedule.at.end }),
+      left: untilMin(now, t.schedule.at.dow, t.schedule.at.start) }));
+    if(!list.length) return;
+    const liveOne = list.find(x => x.live), nx = list.sort((a, b) => a.left - b.left)[0], all = el.dataset.next === "all";
+    el.classList.toggle("live", !!liveOne);
+    el.innerHTML = liveOne ? `<span class="dot"></span> ${all ? esc(liveOne.t.name) + ": " : ""}المحاضرة منعقدة الآن حتى ${clock(liveOne.at.end)} · الرابط في مجموعة المساق على تيليجرام`
+      : `${all ? (() => { const sh = nx.t.name.replace(/^مساق\s+/, ""); return "أقرب محاضرة: " + esc(sh) + (sh.startsWith(DAYS[nx.at.dow]) ? "" : " · " + DAYS[nx.at.dow]); })() : "المحاضرة القادمة: " + DAYS[nx.at.dow]} ${clock(nx.at.start)} · <span class="cd">بعد ${fmtLeft(nx.left, now.sec)}</span>`;
   });
+}
+
+/* ---------- الإعلانات ---------- */
+function annStrip(trackId){
+  const list = (EXTRA.ann || []).filter(a => !a.track || trackId === "week" || a.track === trackId);
+  if(!list.length) return "";
+  return `<section class="ann">${list.map(a => `<p>📣 ${a.track && trackId === "week" ? `<b>${esc((trackIn(TERM_ORDER[0], a.track) || {}).name || "")}:</b> ` : ""}${esc(a.text)}</p>`).join("")}</section>`;
+}
+/* ---------- «كمّل من حيث وقفت» ---------- */
+function lastWatched(){ try{ return JSON.parse(store.get("wahy_y1b4_last") || "null"); }catch(e){ return null; } }
+
+/* ---------- تبويب «هذا الأسبوع»: كل المساقات في صفحة واحدة ---------- */
+function weekView(){
+  const term = TERM_ORDER[0], now = cairoNow(), nowMin = now.dow * 1440 + now.min;
+  const out = [annStrip("week")];
+  const over = termOver(term);
+  if(!over) out.push(`<div class="next" data-next="all"></div>`);
+  const last = lastWatched();
+  if(last && last.url) { const k = "v" + (++VSEQ); VIDS[k] = { url: last.url, title: last.title, seen: last.id };
+    out.push(`<button type="button" class="resume" data-vid="${k}">▶ كمّل من حيث وقفت: <span>${esc(last.title)}</span></button>`); }
+
+  /* مطلوب منك: الاختبارات المفتوحة بالأقرب، ثم التكليفات، ثم ما لم تشاهده */
+  const quizzes = [], tasks = [], unseen = [];
+  if(!over) term.tracks.forEach(track => {
+    const sc = track.schedule; if(!track.subjects || !track.subjects.length) return;
+    const short = track.name.replace(/^مساق\s+/, "");
+    let unseenN = 0;
+    subjOrder(term, track).forEach((k, pos) => {
+      const sub = track.subjects[k], r = subjectOf(sub); if(!r) return;
+      const ctx = { term: term.id, track: track.id, k, subj: sub.name, current: true };
+      unseenN += r.lectures.filter(x => isUrl(x.rec) && !SEEN[lecId(ctx, x)]).length;
+      if(pos !== 0 || !r.latest) return;
+      const l = r.latest;
+      if(sc && sc.quizAt && isUrl(l.quiz)){
+        const open = inWindow(now, sc.quizAt.from, sc.quizAt.to);
+        quizzes.push({ open, left: open ? untilMin(now, sc.quizAt.to.dow, sc.quizAt.to.time) : untilMin(now, sc.quizAt.from.dow, sc.quizAt.from.time),
+          html: `<li><span class="pill ${open ? "open" : ""}">${open ? "مفتوح · باقي " + fmtLeft(untilMin(now, sc.quizAt.to.dow, sc.quizAt.to.time)) : "يُفتح " + DAYS[sc.quizAt.from.dow] + " " + clock(sc.quizAt.from.time)}</span>
+            <span class="wt"><b>${esc(short)}</b> · اختبار ${esc(sub.name)} (${esc(l.label)})${open ? ` · يُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)}` : ""}</span>
+            ${open ? btn(l.quiz, "ابدأ", "quiz", true) : ""}</li>` });
+      }
+      if(l.tasks.length) tasks.push(`<li><span class="pill warn">تكليف</span><span class="wt"><b>${esc(short)}</b> · ${esc(sub.name)}: ${l.tasks.length === 1 ? "تكليف واحد" : l.tasks.length + " تكليفات"}</span><button type="button" class="btn" data-open="${esc(track.id)}" data-k="${k}">عرض</button></li>`);
+    });
+    if(unseenN) unseen.push(`<li><span class="pill">لم تشاهدها</span><span class="wt"><b>${esc(short)}</b>: ${unseenN} ${unseenN === 1 ? "محاضرة" : unseenN <= 10 ? "محاضرات" : "محاضرة"}</span><button type="button" class="btn" data-open="${esc(track.id)}">عرض</button></li>`);
+  });
+  quizzes.sort((a, b) => (b.open - a.open) || (a.left - b.left));
+  const due = [...quizzes.map(x => x.html), ...tasks, ...unseen];
+  out.push(`<section class="card week"><h3>مطلوب منك الأسبوع ده</h3>${due.length ? `<ul>${due.join("")}</ul>` : `<p class="rnote">لا يوجد مطلوب الآن، بارك الله فيك 🌿</p>`}</section>`);
+
+  /* أجندة الأسبوع من السبت إلى الجمعة */
+  if(!over){
+    const startDow = 6, ev = [];
+    term.tracks.forEach(track => { const sc = track.schedule; if(!sc || !sc.at) return; const short = track.name.replace(/^مساق\s+/, "");
+      ev.push({ dow: sc.at.dow, t: sc.at.start, txt: `🎓 محاضرة ${short} · ${clock(sc.at.start)}–${clock(sc.at.end)}` });
+      if(sc.recAt) ev.push({ dow: sc.recAt.dow, t: sc.recAt.time, txt: `🎥 نزول تسجيل ${short} · ${clock(sc.recAt.time)}` });
+      if(sc.quizAt){ ev.push({ dow: sc.quizAt.from.dow, t: sc.quizAt.from.time, txt: `📝 فتح اختبار ${short} · ${clock(sc.quizAt.from.time)}` });
+                     ev.push({ dow: sc.quizAt.to.dow, t: sc.quizAt.to.time, txt: `⏳ قفل اختبار ${short} · ${clock(sc.quizAt.to.time)}` }); }
+    });
+    const days = [0,1,2,3,4,5,6].map(i => (startDow + i) % 7);
+    const rows = days.map(d => {
+      const items = ev.filter(e => e.dow === d).sort((a, b) => toMin(a.t) - toMin(b.t));
+      if(!items.length) return "";
+      return `<div class="day${d === now.dow ? " today" : ""}"><b>${DAYS[d]}${d === now.dow ? " · اليوم" : ""}</b><ul>${items.map(e => `<li class="${((d - startDow + 7) % 7) * 1440 + toMin(e.t) < ((now.dow - startDow + 7) % 7) * 1440 + now.min ? "past" : ""}">${esc(e.txt)}</li>`).join("")}</ul></div>`;
+    }).join("");
+    out.push(`<section class="card week"><h3>أجندة الأسبوع</h3><div class="agenda">${rows}</div></section>`);
+  }
+
+  /* جدول الترم */
+  const trs = term.tracks.map(track => {
+    const sc = track.schedule || {}, order = subjOrder(term, track), k = order[0], sub = track.subjects[k], r = sub && subjectOf(sub);
+    const rec = r ? r.lectures.filter(x => isUrl(x.rec)).length : 0;
+    return `<tr><td><button type="button" class="lnk" data-open="${esc(track.id)}">${esc(track.name.replace(/^مساق\s+/, ""))}</button></td><td>${esc(sc.time || "—")}</td><td>${sub ? esc(sub.name) : "—"}${sub ? `<small>${sub.total ? rec + " من " + sub.total : rec + " محاضرة"}</small>` : ""}</td></tr>`;
+  }).join("");
+  out.push(`<section class="card week"><h3>جدول ${esc(term.name)}</h3><table class="tt"><thead><tr><th>المساق</th><th>الموعد</th><th>المقرر الحالي</th></tr></thead><tbody>${trs}</tbody></table></section>`);
+
+  /* الاختبارات النهائية */
+  if(term.finals){
+    let cd = "";
+    if(term.finalsFrom){ const a = Date.UTC(+term.finalsFrom.slice(0,4), +term.finalsFrom.slice(5,7) - 1, +term.finalsFrom.slice(8,10)), b = Date.UTC(+now.ymd.slice(0,4), +now.ymd.slice(5,7) - 1, +now.ymd.slice(8,10));
+      const d = Math.round((a - b) / 864e5); cd = d > 0 ? ` · باقي ${d === 1 ? "يوم" : d === 2 ? "يومين" : d + (d <= 10 ? " أيام" : " يومًا")}` : d === 0 ? " · تبدأ اليوم" : " · بدأت"; }
+    out.push(`<p class="finals">🗓 الاختبارات النهائية لـ${esc(term.name)}: ${esc(term.finals)}${cd}</p>`);
+  }
+  return `<div class="stack">${out.join("")}</div>`;
 }
 
 /* «مطلوب منك الأسبوع ده»: الاختبار التنشيطي + تكليفات آخر محاضرة + ما لم تشاهده */
@@ -502,7 +608,7 @@ function weekCard(term, track){
 }
 
 function drawPickers(){
-  document.getElementById("tracks").innerHTML = TERM_ORDER[0].tracks.map(t =>
+  document.getElementById("tracks").innerHTML = `<button class="chip wk" data-track="week" aria-pressed="${state.track === "week"}">📌 هذا الأسبوع</button>` + TERM_ORDER[0].tracks.map(t =>
     `<button class="chip" data-track="${esc(t.id)}" aria-pressed="${t.id === state.track}">${esc(t.name.replace(/^مساق\s+/, ""))}</button>`).join("");
 }
 
@@ -557,7 +663,7 @@ function termSection(term, track, isNewest){
   if(!track || !track.subjects || !track.subjects.length) inner = `<div class="msg">روابط هذا الترم ستُضاف قريبًا إن شاء الله.</div>`;
   else if(track.subjects.every(s => !Array.isArray(s.rows))) inner = `<div class="msg">تعذّر تحميل الروابط الآن. حدّث الصفحة بعد قليل.</div>`;
   else inner = subjectBody(term, track);
-  const content = `${track ? scheduleCard(term, track) : ""}${isNewest && track && track.subjects && track.subjects.length ? weekCard(term, track) : ""}${inner}`;
+  const content = `${track ? scheduleCard(term, track) : ""}${inner}`;
   if(isNewest) return `<section class="term stack"><h2>${esc(term.name)} <span class="cur">الحالي</span></h2>${content}</section>`;
   return `<details class="term old" data-old="${esc(term.id)}"${state.open[term.id] ? " open" : ""}>
     <summary><h2>${esc(term.name)}</h2><span class="hint">تسجيلات وملفات ${esc(term.name)} للمراجعة</span></summary>
@@ -566,27 +672,29 @@ function termSection(term, track, isNewest){
 
 function drawMain(){
   const main = document.getElementById("main");
-  const pairs = TERM_ORDER.map(term => ({ term, track: trackIn(term, state.track) }));
+  const week = state.track === "week";
+  const pairs = week ? TERM_ORDER.flatMap(term => term.tracks.map(track => ({ term, track })))
+                     : TERM_ORDER.map(term => ({ term, track: trackIn(term, state.track) }));
   if(state.q.trim()){
     const q = norm(state.q.trim());
     const hits = [];
     pairs.forEach(p => p.track && p.track.subjects.forEach((sub, k) => {
       const r = subjectOf(sub); if(!r) return;
       const ctx = { term: p.term.id, track: p.track.id, k, subj: sub.name, current: p.term.id === DATA.current };
-      r.lectures.forEach(l => { if(norm(l.title).includes(q)) hits.push(lecItem(l, r, p.term.name + " · " + sub.name, ctx)); });
+      r.lectures.forEach(l => { if(norm(l.title).includes(q)) hits.push(lecItem(l, r, (week ? p.track.name.replace(/^مساق\s+/, "") + " · " : "") + p.term.name + " · " + sub.name, ctx)); });
     }));
-    main.innerHTML = `<div class="stack"><div class="meta"><span>نتائج البحث في ${esc(pairs[0].track ? pairs[0].track.name : "")}</span><span>${hits.length} نتيجة</span></div>
-      ${hits.length ? `<ol class="lectures">${hits.join("")}</ol>` : `<div class="msg">لا توجد محاضرة بهذا الاسم في هذا المساق.</div>`}</div>`;
+    main.innerHTML = `<div class="stack"><div class="meta"><span>نتائج البحث في ${week ? "كل المساقات" : esc(pairs[0].track ? pairs[0].track.name : "")}</span><span>${hits.length} نتيجة</span></div>
+      ${hits.length ? `<ol class="lectures">${hits.join("")}</ol>` : `<div class="msg">لا توجد محاضرة بهذا الاسم.</div>`}</div>`;
     return;
   }
-  main.innerHTML = `<div class="stack">${pairs.map((p, k) => termSection(p.term, p.track, k === 0)).join("")}</div>`;
+  main.innerHTML = week ? weekView() : `<div class="stack">${annStrip(state.track)}${pairs.map((p, k) => termSection(p.term, p.track, k === 0)).join("")}</div>`;
   tickNext();
 }
 
 function render(){ drawPickers(); drawMain(); }
-function validTrack(id){ return DATA && TERM_ORDER[0].tracks.some(t => t.id === id) ? id : null; }
+function validTrack(id){ return DATA && (id === "week" || TERM_ORDER[0].tracks.some(t => t.id === id)) ? id : null; }
 function go(track){
-  state.track = validTrack(track) || TERM_ORDER[0].tracks[0].id; state.sub = {};
+  state.track = validTrack(track) || "week"; state.sub = {};
   store.set(KEY.track, state.track);
   const h = "#" + state.track;
   if(location.hash !== h) history.replaceState(null, "", h);
@@ -597,7 +705,7 @@ const fromHash = h => { const m = (h || "").replace("#","").match(/^(?:t\d+-)?([
 /* ---------- البيانات والدخول ---------- */
 function setData(d){
   DATA = { current: d.current, terms: d.terms || [] };
-  EXTRA = { tg: d.tg || {}, rated: d.rated || [] };
+  EXTRA = { tg: d.tg || {}, rated: d.rated || [], ann: d.ann || [] };
   TERM_ORDER = [...DATA.terms].sort((a, b) => (a.id === DATA.current ? -1 : b.id === DATA.current ? 1 : b.id.localeCompare(a.id)));
   if(!TERM_ORDER.length || !TERM_ORDER[0].tracks.length) return false;
   return true;
@@ -608,7 +716,7 @@ function showApp(d, email){
   document.getElementById("pickers").hidden = false;
   document.getElementById("who").hidden = !email;
   document.getElementById("me-mail").textContent = email || "";
-  go(fromHash(location.hash) || store.get(KEY.track) || "");
+  go(fromHash(location.hash) || "week");
 }
 function showGate(){
   DATA = null;
@@ -621,7 +729,7 @@ function showGate(){
 function saveLogin(d){
   store.set(KEY.ses, d.session || store.get(KEY.ses));
   store.set(KEY.mail, d.email || "");
-  try{ store.set(KEY.data, JSON.stringify({ current: d.current, terms: d.terms, tg: d.tg || {}, rated: d.rated || [], at: Date.now() })); }catch(e){ store.set(KEY.data, ""); }
+  try{ store.set(KEY.data, JSON.stringify({ current: d.current, terms: d.terms, tg: d.tg || {}, rated: d.rated || [], ann: d.ann || [], at: Date.now() })); }catch(e){ store.set(KEY.data, ""); }
 }
 function logout(){ [KEY.ses, KEY.mail, KEY.data].forEach(k => store.set(k, "")); try{ google.accounts.id.disableAutoSelect(); }catch(e){} showGate(); }
 function setMsg(cls, html){ const m = document.getElementById("me-msg"); m.className = "mmsg " + cls; m.innerHTML = html; }
@@ -699,13 +807,14 @@ function openVid(k){
   document.getElementById("vid-f").innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${ytId(v.url)}?rel=0&modestbranding=1&autoplay=1" title="تسجيل المحاضرة" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
   document.getElementById("vid-modal").hidden = false;
   if(v.seen && !SEEN[v.seen]){ setSeen(v.seen, true); }
+  store.set("wahy_y1b4_last", JSON.stringify({ url: v.url, title: v.title, id: v.seen, at: Date.now() }));
 }
 function closeVid(){ const m = document.getElementById("vid-modal"); if(m.hidden) return; m.hidden = true; document.getElementById("vid-f").innerHTML = ""; if(DATA) drawMain(); }
 
 /* ---------- تقييم المحاضرة ---------- */
-const RQ = [["overall","التقييم العام للمحاضرة"],["content","وضوح المحتوى وتنظيمه"],["delivery","أسلوب الشيخ في العرض"],["outcomes","إلى أي حد استفدت من المحاضرة؟"],["tech","جودة الصوت والبث / التسجيل"]];
+const RQ = [["overall","التقييم العام للمحاضرة"],["content","وضوح المحتوى وتنظيمه"],["delivery","أسلوب المحاضر في العرض"],["outcomes","إلى أي حد استفدت من المحاضرة؟"],["tech","جودة الصوت والبث / التسجيل"]];
 const RO = [["org","تنظيم المحاضرة (الالتزام بالموعد وسهولة الدخول)"],["links","وصول رابط الحضور والتنبيهات في وقتها"],["sa","متابعة شئون الطلاب والرد على استفساراتك"]];
-const RT = [["benefit","أبرز ما استفدته من المحاضرة"],["improve","ما الذي كان يمكن تحسينه؟"],["wish","موضوع تتمنى التوسع فيه لاحقًا"],["question","سؤال أو استفسار للشيخ","اكتب «لا يوجد» إن لم يكن لديك سؤال"]];
+const RT = [["benefit","أبرز ما استفدته من المحاضرة"],["improve","ما الذي كان يمكن تحسينه؟"],["wish","موضوع تتمنى التوسع فيه لاحقًا"],["question","سؤال أو استفسار للمحاضر","اكتب «لا يوجد» إن لم يكن لديك سؤال"]];
 const RT2 = [["orgnote","ملاحظاتك على التنظيم ومتابعة شئون الطلاب","اكتب «لا يوجد» إن لم تكن لديك ملاحظات"]];
 const RA = ["حضرت البث المباشر","شاهدت التسجيل","حضرت جزءًا وأكملت من التسجيل"];
 let RID = "";
@@ -754,6 +863,7 @@ document.addEventListener("click", e => {
   const v = e.target.closest("[data-vid]"); if(v){ e.preventDefault(); openVid(v.dataset.vid); return; }
   const r = e.target.closest("[data-rate]"); if(r){ e.preventDefault(); openRate(r.dataset.rate, r.dataset.rt); return; }
   const s = e.target.closest("[data-seen]"); if(s){ setSeen(s.dataset.seen, !SEEN[s.dataset.seen]); drawMain(); return; }
+  const o = e.target.closest("[data-open]"); if(o){ go(o.dataset.open); if(o.dataset.k) { state.sub[TERM_ORDER[0].id] = +o.dataset.k; drawMain(); } window.scrollTo({ top: 0, behavior:"smooth" }); return; }
   const g = e.target.closest("[data-goto]"); if(g){ state.sub[g.dataset.term] = +g.dataset.goto; drawMain(); const t = document.querySelector(".tabs"); if(t) t.scrollIntoView({ behavior:"smooth", block:"start" }); return; }
 });
 document.getElementById("vid-x").addEventListener("click", closeVid);
