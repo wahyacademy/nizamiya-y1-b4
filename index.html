@@ -255,6 +255,7 @@ details.more[open] summary{margin-bottom:10px}
 .tab .ok{color:#1f7f74;font-weight:700}
 .tab[aria-selected="true"] .ok{color:#9be3d6}
 .nextstep{background:linear-gradient(135deg,var(--brand-deep),var(--brand));color:#fff;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;border-bottom:4px solid var(--gold)}
+.ns-list{display:flex;flex-direction:column;gap:8px}.ns-row{position:relative;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 44px 10px 12px;display:flex;flex-direction:column;gap:6px}.ns-row b{font-size:15.5px}.ns-n{position:absolute;right:10px;top:10px;width:24px;height:24px;border-radius:50%;background:var(--gold);color:var(--brand-deep);font-style:normal;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
 .nextstep small{color:var(--gold);font-weight:700;font-size:12.5px}
 .nextstep b{font-size:17px;line-height:1.5}
 .nextstep .sub{color:#dbe7f3;font-size:13px}
@@ -352,7 +353,7 @@ footer a{color:var(--brand);font-weight:600;text-decoration:none}
   <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="tour-t" style="width:min(520px,100%)">
     <div class="mhead"><b id="tour-t">إزاي أستخدم الصفحة؟</b><button type="button" class="mx" id="tour-x" aria-label="إغلاق">×</button></div>
     <div class="task-b tour"><ol>
-      <li><b>ابدأ من «خطوتك الجاية»:</b> البطاقة الزرقاء أعلى الصفحة تقول لك أهم شيء الآن (اختبار مفتوح، تكليف، أو موعد الاختبار القادم)، وتحتها مربعات بحضورك واختباراتك وتكليفاتك.</li>
+      <li><b>ابدأ من «خطوتك الجاية»:</b> البطاقة الزرقاء أعلى الصفحة فيها كل المطلوب منك هذا الأسبوع مرتّبًا: الاختبارات المفتوحة ثم التكليفات ثم الاختبارات القادمة، وتحتها مربعات بحضورك واختباراتك وتكليفاتك.</li>
       <li><b>الحضور المباشر هو الأساس:</b> بعد كل محاضرة اضغط «✓ حضرتها»، والتسجيل للمراجعة أو لتعويض ما فاتك فقط. واضغط «✓ حلّيته» بعد الاختبار و«✓ خلّصته» بعد التكليف، فتختفي من قائمتك.</li>
       <li><b>كل مساق في تبويب:</b> من الشريط (أسفل الشاشة على الموبايل) تجد محاضرات المساق وملفاته واختباراته، وآخر محاضرة أولًا.</li>
     </ol><div class="tbtns"><button type="button" class="btn main" id="tour-ok">فهمت، يلا نبدأ</button></div>
@@ -685,8 +686,9 @@ function dueItem(kind, type, trackName, title, detail, action){
 }
 /* ---------- «خطوتك الجاية»: أهم شيء واحد الآن ---------- */
 function nextStep(term, now, over){
-  const card = (tag, title, sub, action) => `<section class="nextstep"><small>${tag}</small><b>${title}</b>${sub ? `<span class="sub">${sub}</span>` : ""}${action || ""}</section>`;
   if(over) return "";
+  /* كل المطلوب هذا الأسبوع: الاختبارات المفتوحة ثم التكليفات ثم الاختبارات القادمة */
+  const row = (title, sub, action) => `<div class="ns-row"><b>${title}</b>${sub ? `<span class="sub">${sub}</span>` : ""}${action || ""}</div>`;
   const cand = [];
   term.tracks.forEach(track => {
     const sc = track.schedule; if(!track.subjects || !track.subjects.length) return;
@@ -695,20 +697,21 @@ function nextStep(term, now, over){
     const l = r.latest;
     const qOpen = l && sc && sc.quizAt && inWindow(now, sc.quizAt.from, sc.quizAt.to);
     const toOpen = sc && sc.quizAt ? untilMin(now, sc.quizAt.from.dow, sc.quizAt.from.time) : WEEK;
-    const qWhen = sc && sc.quizAt ? `يُفتح ${DAYS[sc.quizAt.from.dow]} ${clock(sc.quizAt.from.time)}` : "";
+    const toLec = sc && sc.at ? untilMin(now, sc.at.dow, sc.at.start) : WEEK;
     if(qOpen && isUrl(l.quiz) && !SEEN[quizDone(ctx, l)]){
       const left = untilMin(now, sc.quizAt.to.dow, sc.quizAt.to.time);
-      cand.push({ p: 1, w: left, html: card("خطوتك الجاية", `📝 حل اختبار ${esc(sub.name)} · ${esc(l.label)}`, `${esc(short)} · يُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)} · باقي ${fmtLeft(left)}`, `<div class="ns-act">${btn(l.quiz, "ابدأ الاختبار", "quiz", true)}<button type="button" class="btn ghost" data-done="${esc(quizDone(ctx, l))}">✓ حلّيته</button></div>`) });
+      cand.push({ p: 1, w: left, kind: "q", html: row(`📝 اختبار ${esc(sub.name)} · ${esc(l.label)}`, `${esc(short)} · مفتوح الآن · يُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)} · باقي ${fmtLeft(left)}`, `<div class="ns-act">${btn(l.quiz, "ابدأ الاختبار", "quiz", true)}<button type="button" class="btn ghost" data-done="${esc(quizDone(ctx, l))}">✓ حلّيته</button></div>`) });
     }
-    /* الاختبار القادم بعدّاد حتى فتحه */
-    const toLec = sc && sc.at ? untilMin(now, sc.at.dow, sc.at.start) : WEEK;
-    if(l && sc && sc.quizAt && !qOpen && toOpen < Math.min(toLec, 4 * 1440) && !SEEN[quizDone(ctx, l)])
-      cand.push({ p: 3, w: toOpen, html: card("خطوتك الجاية", `📝 اختبار ${esc(sub.name)} · ${esc(l.label)}`, `${esc(short)} · يُفتح بعد ${fmtLeft(toOpen)} (${DAYS[sc.quizAt.from.dow]} ${clock(sc.quizAt.from.time)}) ويُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)}`, `<button type="button" class="btn" data-ics>🔔 نبّهني في تقويم هاتفي</button>`) });
-    if(l && l.tasks.length && !SEEN[taskDone(ctx, l)]) cand.push({ p: 2, w: toOpen, html: card("خطوتك الجاية", `✍️ تكليف ${esc(sub.name)} · ${esc(l.label)}`, esc(short), `<div class="ns-act">${taskBtn(sub.name + " · " + l.label, l, track.id, k, "عرض التكليف", taskDone(ctx, l))}<button type="button" class="btn ghost" data-done="${esc(taskDone(ctx, l))}">✓ خلّصته</button></div>`) });
+    if(l && l.tasks.length && !SEEN[taskDone(ctx, l)]) cand.push({ p: 2, w: toOpen, kind: "t", html: row(`✍️ تكليف ${esc(sub.name)} · ${esc(l.label)}`, esc(short), `<div class="ns-act">${taskBtn(sub.name + " · " + l.label, l, track.id, k, "عرض التكليف", taskDone(ctx, l))}<button type="button" class="btn ghost" data-done="${esc(taskDone(ctx, l))}">✓ خلّصته</button></div>`) });
+    /* اختبار آخر محاضرة لم يُفتح بعد (يُفتح قبل المحاضرة التالية) */
+    if(l && sc && sc.quizAt && !qOpen && toOpen < toLec && !SEEN[quizDone(ctx, l)])
+      cand.push({ p: 3, w: toOpen, kind: "q", html: row(`📝 اختبار ${esc(sub.name)} · ${esc(l.label)}`, `${esc(short)} · يُفتح بعد ${fmtLeft(toOpen)} (${DAYS[sc.quizAt.from.dow]} ${clock(sc.quizAt.from.time)}) ويُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)}`, `<button type="button" class="btn ghost" data-ics>🔔 نبّهني في تقويم هاتفي</button>`) });
   });
   cand.sort((a, b) => a.p - b.p || a.w - b.w);
-  if(cand.length) return cand[0].html;
-  return card("خطوتك الجاية", "مفيش اختبار ولا تكليف عليك دلوقتي، بارك الله فيك 🌿", "اختبارات وتكليفات الأسبوع الجاي هتظهر هنا أول ما تنزل.");
+  if(!cand.length) return `<section class="nextstep"><small>خطوتك الجاية</small><b>مفيش اختبار ولا تكليف عليك دلوقتي، بارك الله فيك 🌿</b><span class="sub">اختبارات وتكليفات الأسبوع الجاي هتظهر هنا أول ما تنزل.</span></section>`;
+  const nq = cand.filter(c => c.kind === "q").length, nt = cand.length - nq;
+  const cnt = [nq ? (nq === 1 ? "اختبار واحد" : nq === 2 ? "اختباران" : nq + " اختبارات") : "", nt ? (nt === 1 ? "تكليف واحد" : nt === 2 ? "تكليفان" : nt + " تكليفات") : ""].filter(Boolean).join(" و");
+  return `<section class="nextstep"><small>خطوتك الجاية · المطلوب منك هذا الأسبوع</small><b>عليك ${cnt}</b><div class="ns-list">${cand.map((c, i) => c.html.replace('<div class="ns-row">', `<div class="ns-row"><i class="ns-n">${i + 1}</i>`)).join("")}</div></section>`;
 }
 
 /* نص التكليف كنقاط: أسطر الشيت كما هي، والترقيم (1- 2- أو ١- ٢-) يبدأ سطرًا جديدًا */
