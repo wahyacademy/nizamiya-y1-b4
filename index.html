@@ -73,6 +73,7 @@ details.old[open] > .stack{margin-top:14px}
 .sc-courses{list-style:none;margin:0;padding:10px 0 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
 .sc-courses li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 12px;font-size:14px}
 .sc-courses span{color:var(--muted);font-size:13px}
+.finalsbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--gold-soft);color:var(--gold-ink);border:1px solid var(--gold);border-right:5px solid var(--gold);border-radius:10px;padding:10px 14px;font-size:15px;font-weight:600;line-height:1.6}.finalsbar[hidden]{display:none}.finalsbar b{font-weight:700}.fb-i{font-size:20px}.fb-t{flex:1;min-width:200px}.fb-c{background:#003262;color:#fff;border-radius:999px;padding:3px 12px;font-size:14px;white-space:nowrap}
 .finals{margin:0;background:var(--gold-soft);color:var(--gold-ink);font-weight:600;border-radius:8px;padding:8px 12px;font-size:14px;border-right:4px solid var(--gold)}
 .tabs{display:flex;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:12px}
 .tab{border:1px solid var(--line);background:var(--surface);padding:6px 16px;border-radius:999px}
@@ -324,6 +325,7 @@ footer a{color:var(--brand);font-weight:600;text-decoration:none}
   </section>
 
   <div class="pickers" id="pickers" hidden>
+    <div class="finalsbar" id="finalsbar" hidden></div>
     <div class="trackbar" id="tracks" role="tablist" aria-label="المساق"></div>
     <input class="search" id="q" type="search" placeholder="🔍 ابحث في محاضرات الترمين، مثل: بدر" aria-label="بحث في المحاضرات">
   </div>
@@ -350,7 +352,7 @@ footer a{color:var(--brand);font-weight:600;text-decoration:none}
   <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="tour-t" style="width:min(520px,100%)">
     <div class="mhead"><b id="tour-t">إزاي أستخدم الصفحة؟</b><button type="button" class="mx" id="tour-x" aria-label="إغلاق">×</button></div>
     <div class="task-b tour"><ol>
-      <li><b>ابدأ من «خطوتك الجاية»:</b> البطاقة الزرقاء أعلى الصفحة تقول لك أهم شيء الآن (محاضرة قريبة، اختبار مفتوح، تكليف)، وتحتها مربعات بحضورك واختباراتك وتكليفاتك.</li>
+      <li><b>ابدأ من «خطوتك الجاية»:</b> البطاقة الزرقاء أعلى الصفحة تقول لك أهم شيء الآن (اختبار مفتوح، تكليف، أو موعد الاختبار القادم)، وتحتها مربعات بحضورك واختباراتك وتكليفاتك.</li>
       <li><b>الحضور المباشر هو الأساس:</b> بعد كل محاضرة اضغط «✓ حضرتها»، والتسجيل للمراجعة أو لتعويض ما فاتك فقط. واضغط «✓ حلّيته» بعد الاختبار و«✓ خلّصته» بعد التكليف، فتختفي من قائمتك.</li>
       <li><b>كل مساق في تبويب:</b> من الشريط (أسفل الشاشة على الموبايل) تجد محاضرات المساق وملفاته واختباراته، وآخر محاضرة أولًا.</li>
     </ol><div class="tbtns"><button type="button" class="btn main" id="tour-ok">فهمت، يلا نبدأ</button></div>
@@ -610,7 +612,7 @@ const lecItem = (l, s, subjName, ctx) => `
 
 function scheduleCard(term, track){
   const sc = track.schedule;
-  if(!sc && !term.finals) return "";
+  if(!sc) return "";
   const row = (k, v) => v ? `<div class="sc-row"><dt>${k}</dt><dd>${esc(v)}</dd></div>` : "";
   const cur = term.id === DATA.current && !termOver(term);
   const line = sc && sc.at ? ["🕐 " + DAYS[sc.at.dow] + " " + clock(sc.at.start),
@@ -625,7 +627,6 @@ function scheduleCard(term, track){
       ${row("الاختبار التنشيطي", sc.quiz)}
     </dl>
     ${(sc.courses||[]).length ? `<ul class="sc-courses">${sc.courses.map(c => `<li><strong>${esc(c.name)}</strong><span>${esc(c.teacher)} · ${c.count} ${c.count <= 10 ? "محاضرات" : "محاضرة"}</span></li>`).join("")}</ul>` : ""}` : ""}
-    ${term.finals ? `<p class="finals">الاختبارات النهائية لـ${esc(term.name)}: ${esc(term.finals)}</p>` : ""}
     ${line ? `</div></details>` : ""}
     ${cur ? linksRow(term, track) : ""}
   </section>`;
@@ -686,9 +687,6 @@ function dueItem(kind, type, trackName, title, detail, action){
 function nextStep(term, now, over){
   const card = (tag, title, sub, action) => `<section class="nextstep"><small>${tag}</small><b>${title}</b>${sub ? `<span class="sub">${sub}</span>` : ""}${action || ""}</section>`;
   if(over) return "";
-  const tracks = term.tracks.filter(t => t.schedule && t.schedule.at);
-  const liveT = tracks.find(t => inWindow(now, { dow: t.schedule.at.dow, time: t.schedule.at.start }, { dow: t.schedule.at.dow, time: t.schedule.at.end }));
-  if(liveT) return card("خطوتك الجاية", `🔴 محاضرة ${esc(liveT.name)} منعقدة الآن`, "رابط الحضور في مجموعة المساق على تيليجرام · حتى " + clock(liveT.schedule.at.end));
   const cand = [];
   term.tracks.forEach(track => {
     const sc = track.schedule; if(!track.subjects || !track.subjects.length) return;
@@ -702,24 +700,15 @@ function nextStep(term, now, over){
       const left = untilMin(now, sc.quizAt.to.dow, sc.quizAt.to.time);
       cand.push({ p: 1, w: left, html: card("خطوتك الجاية", `📝 حل اختبار ${esc(sub.name)} · ${esc(l.label)}`, `${esc(short)} · يُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)} · باقي ${fmtLeft(left)}`, `<div class="ns-act">${btn(l.quiz, "ابدأ الاختبار", "quiz", true)}<button type="button" class="btn ghost" data-done="${esc(quizDone(ctx, l))}">✓ حلّيته</button></div>`) });
     }
-    /* المحاضرة المباشرة القادمة خلال 3 ساعات: الحضور أولًا */
-    const toLec = sc && sc.at ? untilMin(now, sc.at.dow, sc.at.start) : WEEK;
-    if(toLec <= 180) cand.push({ p: 0, w: toLec, html: card("خطوتك الجاية", `🎓 محاضرة ${esc(short)} بعد ${fmtLeft(toLec)}`, `${DAYS[sc.at.dow]} ${clock(sc.at.start)}–${clock(sc.at.end)} · رابط الحضور في مجموعة المساق على تيليجرام`) });
-    /* آخر محاضرة لم يُسجَّل حضورها: هل حضرتها مباشرة؟ ومن فاتته يعوّضها بالتسجيل */
-    if(l && !followed(ctx, l) && !qOpen){
-      const t = sub.name + " · " + l.label + (l.title ? ": " + l.title : "");
-      cand.push({ p: 2, w: toOpen, html: card("خطوتك الجاية", `🎓 حضرت ${esc(sub.name)} · ${esc(l.label)} مباشرة؟`, `${esc(short)}${l.title ? " · " + esc(l.title) : ""}${qWhen ? " · اختبارها " + qWhen : ""}`, `<div class="ns-act"><button type="button" class="btn main" data-seen="${esc(attId(ctx, l))}">✓ حضرتها</button>${isUrl(l.rec) ? vidBtn(l.rec, "فاتتني: شاهد التسجيل", t, lecId(ctx, l), false).replace('class="btn"', 'class="btn ghost"') : ""}</div>`) });
-    }
     /* الاختبار القادم بعدّاد حتى فتحه */
-    if(l && sc && sc.quizAt && !qOpen && toOpen <= 4 * 1440 && !SEEN[quizDone(ctx, l)])
+    const toLec = sc && sc.at ? untilMin(now, sc.at.dow, sc.at.start) : WEEK;
+    if(l && sc && sc.quizAt && !qOpen && toOpen < Math.min(toLec, 4 * 1440) && !SEEN[quizDone(ctx, l)])
       cand.push({ p: 3, w: toOpen, html: card("خطوتك الجاية", `📝 اختبار ${esc(sub.name)} · ${esc(l.label)}`, `${esc(short)} · يُفتح بعد ${fmtLeft(toOpen)} (${DAYS[sc.quizAt.from.dow]} ${clock(sc.quizAt.from.time)}) ويُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)}`, `<button type="button" class="btn" data-ics>🔔 نبّهني في تقويم هاتفي</button>`) });
-    if(l && l.tasks.length && !SEEN[taskDone(ctx, l)]) cand.push({ p: 4, w: 0, html: card("خطوتك الجاية", `✍️ تكليف ${esc(sub.name)} · ${esc(l.label)}`, esc(short), `<div class="ns-act">${taskBtn(sub.name + " · " + l.label, l, track.id, k, "عرض التكليف", taskDone(ctx, l))}<button type="button" class="btn ghost" data-done="${esc(taskDone(ctx, l))}">✓ خلّصته</button></div>`) });
-    /* المحاضرة القادمة (أبعد من 3 ساعات) تذكيرًا بالحضور */
-    if(sc && sc.at && toLec > 180) cand.push({ p: 6, w: toLec, html: card("خطوتك الجاية", `🎓 محاضرتك القادمة: ${esc(short)}`, `${DAYS[sc.at.dow]} ${clock(sc.at.start)} · بعد ${fmtLeft(toLec)} · احرص على الحضور المباشر`, `<button type="button" class="btn" data-ics>🔔 نبّهني قبلها</button>`) });
+    if(l && l.tasks.length && !SEEN[taskDone(ctx, l)]) cand.push({ p: 2, w: toOpen, html: card("خطوتك الجاية", `✍️ تكليف ${esc(sub.name)} · ${esc(l.label)}`, esc(short), `<div class="ns-act">${taskBtn(sub.name + " · " + l.label, l, track.id, k, "عرض التكليف", taskDone(ctx, l))}<button type="button" class="btn ghost" data-done="${esc(taskDone(ctx, l))}">✓ خلّصته</button></div>`) });
   });
   cand.sort((a, b) => a.p - b.p || a.w - b.w);
   if(cand.length) return cand[0].html;
-  return card("خطوتك الجاية", "أنت متابع كل حاجة، بارك الله فيك 🌿", "استعد للمحاضرة القادمة واحرص على حضورها مباشرة.");
+  return card("خطوتك الجاية", "مفيش اختبار ولا تكليف عليك دلوقتي، بارك الله فيك 🌿", "اختبارات وتكليفات الأسبوع الجاي هتظهر هنا أول ما تنزل.");
 }
 
 /* نص التكليف كنقاط: أسطر الشيت كما هي، والترقيم (1- 2- أو ١- ٢-) يبدأ سطرًا جديدًا */
@@ -879,13 +868,6 @@ function weekView(){
   }).join("");
   out.push(`<section class="card week" id="w-term"><h3>جدول ${esc(term.name)}</h3><table class="tt"><thead><tr><th>المساق</th><th>الموعد</th><th>المقرر الحالي</th></tr></thead><tbody>${trs}</tbody></table></section>`);
 
-  /* الاختبارات النهائية */
-  if(term.finals){
-    let cd = "";
-    if(term.finalsFrom){ const a = Date.UTC(+term.finalsFrom.slice(0,4), +term.finalsFrom.slice(5,7) - 1, +term.finalsFrom.slice(8,10)), b = Date.UTC(+now.ymd.slice(0,4), +now.ymd.slice(5,7) - 1, +now.ymd.slice(8,10));
-      const d = Math.round((a - b) / 864e5); cd = d > 0 ? ` · باقي ${d === 1 ? "يوم" : d === 2 ? "يومين" : d + (d <= 10 ? " أيام" : " يومًا")}` : d === 0 ? " · تبدأ اليوم" : " · بدأت"; }
-    out.push(`<p class="finals">🗓 الاختبارات النهائية لـ${esc(term.name)}: ${esc(term.finals)}${cd}</p>`);
-  }
   return `<div class="stack">${out.join("")}</div>`;
 }
 
@@ -909,7 +891,18 @@ function weekCard(term, track){
   return `<section class="card week"><h3>مطلوب منك الأسبوع ده</h3><ul>${items.join("")}</ul></section>`;
 }
 
+/* شريط الاختبارات النهائية أعلى الصفحة (ظاهر في كل التبويبات) */
+function finalsBar(){
+  const el = document.getElementById("finalsbar"), term = TERM_ORDER[0];
+  if(!el || !term || !term.finals){ if(el) el.hidden = true; return; }
+  const now = cairoNow(); let cd = "";
+  if(term.finalsFrom){ const a = Date.UTC(+term.finalsFrom.slice(0,4), +term.finalsFrom.slice(5,7) - 1, +term.finalsFrom.slice(8,10)), b = Date.UTC(+now.ymd.slice(0,4), +now.ymd.slice(5,7) - 1, +now.ymd.slice(8,10));
+    const d = Math.round((a - b) / 864e5); cd = d > 0 ? `باقي ${d === 1 ? "يوم" : d === 2 ? "يومين" : d + (d <= 10 ? " أيام" : " يومًا")}` : d === 0 ? "تبدأ اليوم" : "بدأت"; }
+  el.innerHTML = `<span class="fb-i">🗓</span><span class="fb-t">الاختبارات النهائية لـ${esc(term.name)}: <b>${esc(term.finals)}</b></span>${cd ? `<span class="fb-c">${cd}</span>` : ""}`;
+  el.hidden = false;
+}
 function drawPickers(){
+  finalsBar();
   const ICO = { thu:"🌙", fri:"🕌", "sat-am":"☀️", "sat-pm":"🌇" };
   const short = n => n.replace(/^مساق\s+/, "").replace(/صباحًا$/, "ص").replace(/مساءً$/, "م");
   document.getElementById("tracks").innerHTML = `<button class="chip wk" data-track="week" aria-pressed="${state.track === "week"}"><i>📌</i><span class="lf">هذا الأسبوع</span><span class="ls">الأسبوع</span></button>` + TERM_ORDER[0].tracks.map(t =>
