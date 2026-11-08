@@ -156,6 +156,14 @@ button.btn{cursor:pointer;font-family:inherit}
 .grades .sc{font-weight:700;color:var(--brand-deep);white-space:nowrap}
 .tgrem{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--surface);border:1px dashed var(--brand);border-radius:10px;padding:10px 14px;font-size:14px}
 .tgrem.on{border-style:solid;border-color:#bfe3de;color:#1f7f74;font-weight:600}
+.ns-act{display:flex;flex-wrap:wrap;gap:8px}
+.nextstep .btn.ghost{background:transparent;border-color:rgba(255,255,255,.55);color:#fff;font-weight:600}
+.task-b{padding:14px 16px 18px;display:flex;flex-direction:column;gap:12px}
+.task-b .ti{border:1px solid var(--line);border-right:4px solid var(--gold);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.task-b .ti p{margin:0;line-height:1.7;white-space:pre-line}
+.task-b .ta{display:flex;flex-wrap:wrap;gap:8px}
+.task-b .tfoot{font-size:13px;color:var(--muted)}
+.icsbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14px}
 .vfoot{padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
 #rate-f{padding:14px 16px 18px;display:flex;flex-direction:column;gap:14px}
 #rate-f fieldset{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0}
@@ -317,6 +325,12 @@ footer a{color:var(--brand);font-weight:600;text-decoration:none}
     <div class="vfoot"><span>نحفظ لك الدقيقة التي وصلت إليها، وتُحسب «شاهدتها» بعد مشاهدة أغلب المحاضرة.</span><a class="btn" id="vid-l" href="#" target="_blank" rel="noopener">فتح على يوتيوب</a></div>
   </div>
 </div>
+<div class="modal" id="task-modal" hidden>
+  <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="task-t" style="width:min(560px,100%)">
+    <div class="mhead"><b id="task-t">التكليف</b><button type="button" class="mx" id="task-x" aria-label="إغلاق">×</button></div>
+    <div id="task-b" class="task-b"></div>
+  </div>
+</div>
 <div class="modal" id="rate-modal" hidden>
   <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="rate-t">
     <div class="mhead"><b id="rate-t">تقييم المحاضرة</b><button type="button" class="mx" id="rate-x" aria-label="إغلاق">×</button></div>
@@ -382,6 +396,9 @@ function termOver(term){ return term.until && cairoNow().ymd > term.until; }
 
 /* ---------- شاهدتها (تُحفظ على جهاز الطالب فقط) ---------- */
 let SEEN = {}; try{ SEEN = JSON.parse(store.get("wahy_y1b4_seen") || "{}") || {}; }catch(e){ SEEN = {}; }
+/* «جزء عم 2» و«جزء تبارك 2» دُمجا في مقرر واحد: معرّفاتهما القديمة تُنقل تلقائيًا */
+const remapId = id => String(id).replace(/^(t[12])\|fri\|1\|/, "$1|fri|0|");
+Object.keys(SEEN).forEach(id => { const n = remapId(id); if(n !== id){ delete SEEN[id]; SEEN[n] = 1; } });
 const lecId = (ctx, l) => ctx ? ctx.term + "|" + ctx.track + "|" + ctx.k + "|" + l.n : "";
 function setSeen(id, on){ if(!id) return; if(on) SEEN[id] = 1; else delete SEEN[id]; store.set("wahy_y1b4_seen", JSON.stringify(SEEN)); pushSeen(); }
 /* مزامنة «شاهدتها» مع السكربت: تظهر على كل أجهزة الطالب، وتعتمد عليها لجنة المتابعة */
@@ -396,7 +413,7 @@ function pushSeen(){
 }
 function mergeSeen(list){
   if(!Array.isArray(list)) return;
-  const srv = {}; list.forEach(id => { srv[id] = 1; SEEN[id] = 1; });
+  const srv = {}; list.forEach(id => { id = remapId(id); srv[id] = 1; SEEN[id] = 1; });
   store.set("wahy_y1b4_seen", JSON.stringify(SEEN));
   if(Object.keys(SEEN).some(id => !srv[id])) pushSeen();
 }
@@ -411,6 +428,8 @@ function setPos(vid, t, dur){
 }
 const mmss = s => { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(x).padStart(2, "0"); };
 const VIDS = {};   // معرّف زر الفيديو ← {url, title, seen}
+const TASKS = {}; let TSEQ = 0;   // زر «عرض التكليف» ← {title, tasks, track, k}
+function taskBtn(title, l, track, k, label){ const key = "t" + (++TSEQ); TASKS[key] = { title, tasks: l.tasks, track, k }; return `<button type="button" class="btn" data-task="${key}">${label || "عرض التكليف"}</button>`; }
 let VSEQ = 0;
 
 /* ---------- تحويل صفوف الشيت إلى محاضرات ---------- */
@@ -462,7 +481,7 @@ function toSubject(rows){
       if(isUrl(ref)){
         let name = refLabel || "مراجع المقرر";
         if(/youtube\.com\/playlist/.test(ref)) name = "قائمة تشغيل · " + name;
-        refs.push({ label: name, url: ref });
+        if(!refs.some(x => x.url === ref)) refs.push({ label: name, url: ref });
       } else refLabel = ref;
     }
     const files = fileCols.map(f => ({ name: f.name, val: get(r, f.i) }));
@@ -486,8 +505,14 @@ function toSubject(rows){
     const urls = lectures.map(l => l.files[k].val).filter(isUrl);
     if(!urls.length) return;
     const uniq = [...new Set(urls)];
-    if(uniq.length === 1 && urls.length > 1) shared.push({ name: f.name, url: uniq[0] });
-    else perLecture.push(k);
+    if(uniq.length === 1 && urls.length > 1){ shared.push({ name: f.name, url: uniq[0] }); return; }
+    /* رابط يتكرر في 3 محاضرات أو أكثر = ملف المقرر كاملًا: يظهر مرة واحدة أعلى المقرر */
+    const cnt = {}; urls.forEach(u => cnt[u] = (cnt[u] || 0) + 1);
+    Object.keys(cnt).filter(u => cnt[u] >= 3).forEach(u => {
+      shared.push({ name: f.name.replace(/ملف المحاضرة/, "ملف المقرر كاملًا"), url: u, full: true });
+      lectures.forEach(l => { if(l.files[k].val === u) l.files[k].val = ""; l.files[k].hide = true; });
+    });
+    if(lectures.some(l => isUrl(l.files[k].val))) perLecture.push(k);
   });
   const recorded = lectures.filter(l => isUrl(l.rec));
   return { lectures, refs, shared, perLecture,
@@ -525,7 +550,7 @@ function rateBtn(id, l, ctx){
 const lecActions = (l, s, ctx) =>
   vidBtn(l.rec, "مشاهدة التسجيل", (ctx ? ctx.subj + " · " : "") + l.label + (l.title ? ": " + l.title : ""), lecId(ctx, l)) +
   l.extra.filter(x => x.icon === "play").map(x => vidBtn(x.url, x.name, x.name, lecId(ctx, l))).join("") +
-  s.perLecture.map(k => btn(l.files[k].val, l.files[k].name, "file", false, true)).join("") +
+  s.perLecture.map(k => btn(l.files[k].val, l.files[k].name, "file", false, !l.files[k].hide)).join("") +
   btn(l.quiz, "الاختبار", "quiz", false, s.showQuiz) +
   l.extra.filter(x => x.icon !== "play").map(x => btn(x.url, x.name, x.icon)).join("") +
   (ctx && isUrl(l.rec) ? `<button type="button" class="btn seen-btn" data-seen="${esc(lecId(ctx, l))}" aria-pressed="${!!SEEN[lecId(ctx, l)]}">${SEEN[lecId(ctx, l)] ? "✓ شاهدتها" : "○ شاهدتها"}</button>` : "") +
@@ -625,21 +650,68 @@ function nextStep(term, now, over){
     const k = subjOrder(term, track)[0], sub = track.subjects[k], r = sub && subjectOf(sub); if(!r) return;
     const ctx = { term: term.id, track: track.id, k, subj: sub.name, current: true }, short = track.name.replace(/^مساق\s+/, "");
     const l = r.latest;
-    if(l && sc && sc.quizAt && isUrl(l.quiz) && inWindow(now, sc.quizAt.from, sc.quizAt.to)){
+    const qOpen = l && sc && sc.quizAt && inWindow(now, sc.quizAt.from, sc.quizAt.to);
+    const toOpen = sc && sc.quizAt ? untilMin(now, sc.quizAt.from.dow, sc.quizAt.from.time) : WEEK;
+    const qWhen = sc && sc.quizAt ? `يُفتح ${DAYS[sc.quizAt.from.dow]} ${clock(sc.quizAt.from.time)}` : "";
+    if(qOpen && isUrl(l.quiz)){
       const left = untilMin(now, sc.quizAt.to.dow, sc.quizAt.to.time);
       cand.push({ p: 1, w: left, html: card("خطوتك الجاية", `📝 حل اختبار ${esc(sub.name)} · ${esc(l.label)}`, `${esc(short)} · يُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)} · باقي ${fmtLeft(left)}`, btn(l.quiz, "ابدأ الاختبار", "quiz", true)) });
     }
-    const unseen = [...r.lectures].reverse().find(x => isUrl(x.rec) && !SEEN[lecId(ctx, x)]);
-    if(unseen){
-      const nextLec = sc && sc.at ? untilMin(now, sc.at.dow, sc.at.start) : WEEK;
-      const t = sub.name + " · " + unseen.label + (unseen.title ? ": " + unseen.title : "");
-      cand.push({ p: 2, w: nextLec, html: card("خطوتك الجاية", `▶ شاهد ${esc(sub.name)} · ${esc(unseen.label)}`, `${esc(short)}${unseen.title ? " · " + esc(unseen.title) : ""}${sc && sc.at ? " · قبل محاضرة " + DAYS[sc.at.dow] : ""}`, vidBtn(unseen.rec, "مشاهدة التسجيل", t, lecId(ctx, unseen))) });
+    /* آخر محاضرة لم تُعلَّم: قبل اختبارها (ومن حضرها مباشرة يعلّمها بزر واحد) */
+    if(l && isUrl(l.rec) && !SEEN[lecId(ctx, l)] && !qOpen){
+      const t = sub.name + " · " + l.label + (l.title ? ": " + l.title : "");
+      cand.push({ p: 2, w: toOpen, html: card("خطوتك الجاية", `▶ راجع ${esc(sub.name)} · ${esc(l.label)}`, `${esc(short)}${qWhen ? " · قبل اختبارها: " + qWhen : ""}`, `<div class="ns-act">${vidBtn(l.rec, "مشاهدة التسجيل", t, lecId(ctx, l))}<button type="button" class="btn ghost" data-seen="${esc(lecId(ctx, l))}">✓ حضرتها مباشرة</button></div>`) });
     }
-    if(l && l.tasks.length) cand.push({ p: 3, w: 0, html: card("خطوتك الجاية", `✍️ تكليف ${esc(sub.name)} · ${esc(l.label)}`, esc(short), `<button type="button" class="btn" data-open="${esc(track.id)}" data-k="${k}">عرض التكليف</button>`) });
+    /* الاختبار القادم بعدّاد حتى فتحه */
+    if(l && sc && sc.quizAt && !qOpen && toOpen <= 4 * 1440)
+      cand.push({ p: 3, w: toOpen, html: card("خطوتك الجاية", `📝 اختبار ${esc(sub.name)} · ${esc(l.label)}`, `${esc(short)} · يُفتح بعد ${fmtLeft(toOpen)} (${DAYS[sc.quizAt.from.dow]} ${clock(sc.quizAt.from.time)}) ويُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)}`, `<button type="button" class="btn" data-ics>🔔 نبّهني في تقويم هاتفي</button>`) });
+    if(l && l.tasks.length) cand.push({ p: 4, w: 0, html: card("خطوتك الجاية", `✍️ تكليف ${esc(sub.name)} · ${esc(l.label)}`, esc(short), taskBtn(sub.name + " · " + l.label, l, track.id, k)) });
+    const older = [...r.lectures].reverse().find(x => x !== l && isUrl(x.rec) && !SEEN[lecId(ctx, x)]);
+    if(older){
+      const t = sub.name + " · " + older.label + (older.title ? ": " + older.title : "");
+      cand.push({ p: 5, w: toOpen, html: card("خطوتك الجاية", `▶ شاهد ${esc(sub.name)} · ${esc(older.label)}`, `${esc(short)}${older.title ? " · " + esc(older.title) : ""}`, `<div class="ns-act">${vidBtn(older.rec, "مشاهدة التسجيل", t, lecId(ctx, older))}<button type="button" class="btn ghost" data-seen="${esc(lecId(ctx, older))}">✓ حضرتها مباشرة</button></div>`) });
+    }
   });
   cand.sort((a, b) => a.p - b.p || a.w - b.w);
   if(cand.length) return cand[0].html;
   return card("خطوتك الجاية", "أنت متابع كل حاجة، بارك الله فيك 🌿", "راجع آخر المحاضرات أو استعد للمحاضرة القادمة.");
+}
+
+/* ---------- نافذة التكليف (بدل الانتقال لصفحة المقرر) ---------- */
+function openTask(key){
+  const t = TASKS[key]; if(!t) return;
+  document.getElementById("task-t").textContent = "التكليف · " + t.title;
+  document.getElementById("task-b").innerHTML = t.tasks.map((x, i) => `<div class="ti"><b>${x.text ? "" : (t.tasks.length > 1 ? "تكليف " + (i + 1) : "التكليف")}</b>${x.text ? `<p>${esc(x.text)}</p>` : ""}${x.urls.length ? `<div class="ta">${x.urls.map((u, j) => `<a class="btn main" href="${esc(fixUrl(u))}" target="_blank" rel="noopener">${x.urls.length > 1 ? "فتح الرابط " + (j + 1) : "فتح التكليف"}</a>`).join("")}</div>` : ""}</div>`).join("") +
+    `<div class="tfoot"><button type="button" class="lnk" data-open="${esc(t.track)}" data-k="${t.k}">عرض المحاضرة في صفحة المساق</button></div>`;
+  document.getElementById("task-modal").hidden = false;
+}
+function closeTask(){ document.getElementById("task-modal").hidden = true; }
+/* ---------- تنبيهات في تقويم الهاتف: ملف .ics بمواعيد الترم وتنبيهاتها ---------- */
+function icsFile(){
+  const term = TERM_ORDER[0]; if(!term) return;
+  const now = cairoNow(), pad = n => String(n).padStart(2, "0");
+  const until = (term.until || "").replace(/-/g, "") + "T215959Z";
+  /* أول موعد قادم لنقطة أسبوعية، بتوقيت UTC (القاهرة +2 في الشتاء) */
+  const first = (dow, t, shiftMin) => {
+    const add = Math.floor((untilMin(now, dow, t) + (shiftMin || 0)) / 1440);
+    const base = Date.UTC(+now.ymd.slice(0, 4), +now.ymd.slice(5, 7) - 1, +now.ymd.slice(8, 10) + add, 0, toMin(t) - 120);
+    const d = new Date(base);
+    return d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + "T" + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + "00Z";
+  };
+  const ev = [], site = location.href.split("#")[0];
+  const add = (uid, title, start, durMin, alarm, desc) => ev.push(["BEGIN:VEVENT", "UID:" + uid + "@wahy-nizamiya-y1b4", "DTSTAMP:" + new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z", "DTSTART:" + start, "DURATION:PT" + durMin + "M",
+    "RRULE:FREQ=WEEKLY;UNTIL=" + until, "SUMMARY:" + title, "DESCRIPTION:" + desc + " " + site, "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:" + title, "TRIGGER:" + alarm, "END:VALARM", "END:VEVENT"].join("\r\n"));
+  term.tracks.forEach(tr => {
+    const sc = tr.schedule; if(!sc) return; const short = tr.name.replace(/^مساق\s+/, "");
+    if(sc.at) add(tr.id + "-lec", "محاضرة " + short + " (الدراسة النظامية)", first(sc.at.dow, sc.at.start), toMin(sc.at.end) - toMin(sc.at.start), "-PT30M", "رابط الحضور في مجموعة المساق على تيليجرام.");
+    if(sc.quizAt){
+      add(tr.id + "-qo", "فُتح اختبار " + short + " التنشيطي", first(sc.quizAt.from.dow, sc.quizAt.from.time), 15, "PT0M", "الاختبار من صفحة الروابط:");
+      add(tr.id + "-qc", "باقي 3 ساعات على قفل اختبار " + short, first(sc.quizAt.to.dow, sc.quizAt.to.time, -180), 15, "PT0M", "لو لم تحل الاختبار بعد:");
+    }
+  });
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Wahy Academy//Nizamiya Y1B4//AR", "CALSCALE:GREGORIAN", "X-WR-CALNAME:الدراسة النظامية — وحي", ...ev, "END:VCALENDAR"].join("\r\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar;charset=utf-8" })); a.download = "wahy-nizamiya-tanbihat.ics";
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
 }
 
 /* ---------- «درجاتي» (لا تظهر إلا إذا فعّلتها اللجنة من السكربت) ---------- */
@@ -702,7 +774,7 @@ function weekView(){
       }
       if(l.tasks.length) tasks.push(dueItem("task", "✍️ تكليف", track.name, `${esc(sub.name)} · ${esc(l.label)}`,
         l.tasks.length === 1 ? "تكليف واحد مطلوب من آخر محاضرة" : l.tasks.length + " تكليفات مطلوبة من آخر محاضرة",
-        `<button type="button" class="btn" data-open="${esc(track.id)}" data-k="${k}">عرض التكليف</button>`));
+        taskBtn(sub.name + " · " + l.label, l, track.id, k)));
     });
     if(unseenN) unseen.push(`<li><span><b>${esc(short)}</b>: ${unseenN} ${unseenN === 1 ? "محاضرة" : unseenN <= 10 ? "محاضرات" : "محاضرة"}</span><button type="button" class="btn" data-open="${esc(track.id)}">عرض</button></li>`);
   });
@@ -733,6 +805,7 @@ function weekView(){
     const rest = rows.filter(r => !near.includes(r));
     out.push(`<section class="card week"><h3>أجندة الأسبوع</h3><div class="agenda">${near.map(r => r.html).join("")}</div>
       ${rest.length ? `<details class="more" data-more="agenda"${state.more.agenda ? " open" : ""}><summary>عرض الأسبوع كله</summary><div class="agenda">${rest.map(r => r.html).join("")}</div></details>` : ""}</section>`);
+    out.push(`<div class="icsbar"><span>🔔 نبّهني على هاتفي: قبل كل محاضرة، وعند فتح كل اختبار، وقبل قفله بـ3 ساعات</span><button type="button" class="btn main" data-ics>أضف التنبيهات لتقويمي</button></div>`);
   }
 
   /* جدول الترم */
@@ -823,7 +896,7 @@ function subjectBody(term, track){
   if(!r) body = `<div class="msg">تعذّر تحميل ${esc(sub.name)}. حدّث الصفحة بعد قليل.</div>`;
   else {
     const top = [];
-    r.shared.forEach(x => top.push(`<a class="ref" href="${esc(x.url)}" target="_blank" rel="noopener">${ICON.file}${esc(x.name)} (للمقرر كله)</a>`));
+    r.shared.forEach(x => top.push(`<a class="ref" href="${esc(x.url)}" target="_blank" rel="noopener">${ICON.file}${esc(x.name)}${x.full ? "" : " (للمقرر كله)"}</a>`));
     r.refs.forEach(x => top.push(`<a class="ref" href="${esc(x.url)}" target="_blank" rel="noopener">${ICON.folder}${esc(x.label)}</a>`));
     body = `
       <div class="meta"><span>مقرر ${esc(sub.name)}</span><span>${sub.total ? `${r.lectures.length} من ${sub.total} محاضرة` : `${r.lectures.length} محاضرة`}</span></div>
@@ -1086,18 +1159,22 @@ document.addEventListener("click", e => {
   const rs = e.target.closest("[data-restart]"); if(rs){ e.preventDefault(); const k = rs.dataset.restart; const v = VIDS[k]; stopPlayer(); if(v) setPos(ytId(v.url), 0); openVid(k, true); return; }
   const v = e.target.closest("[data-vid]"); if(v){ e.preventDefault(); openVid(v.dataset.vid); return; }
   const tl = e.target.closest("[data-tglink]"); if(tl){ e.preventDefault(); tgLink(tl); return; }
+  const tk = e.target.closest("[data-task]"); if(tk){ e.preventDefault(); openTask(tk.dataset.task); return; }
+  const ic = e.target.closest("[data-ics]"); if(ic){ e.preventDefault(); icsFile(); ic.textContent = "✓ افتح الملف لإضافته لتقويمك"; return; }
   const r = e.target.closest("[data-rate]"); if(r){ e.preventDefault(); openRate(r.dataset.rate, r.dataset.rt); return; }
   const s = e.target.closest("[data-seen]"); if(s){ setSeen(s.dataset.seen, !SEEN[s.dataset.seen]); drawMain(); return; }
-  const o = e.target.closest("[data-open]"); if(o){ go(o.dataset.open); if(o.dataset.k) { state.sub[TERM_ORDER[0].id] = +o.dataset.k; drawMain(); } window.scrollTo({ top: 0, behavior:"smooth" }); return; }
+  const o = e.target.closest("[data-open]"); if(o){ closeTask(); go(o.dataset.open); if(o.dataset.k) { state.sub[TERM_ORDER[0].id] = +o.dataset.k; drawMain(); } window.scrollTo({ top: 0, behavior:"smooth" }); return; }
   const g = e.target.closest("[data-goto]"); if(g){ state.sub[g.dataset.term] = +g.dataset.goto; drawMain(); const t = document.querySelector(".tabs"); if(t) t.scrollIntoView({ behavior:"smooth", block:"start" }); return; }
 });
 document.getElementById("vid-x").addEventListener("click", closeVid);
 document.getElementById("vid-modal").addEventListener("click", e => { if(e.target.id === "vid-modal") closeVid(); });
 document.getElementById("rate-x").addEventListener("click", closeRate);
+document.getElementById("task-x").addEventListener("click", closeTask);
+document.getElementById("task-modal").addEventListener("click", e => { if(e.target.id === "task-modal") closeTask(); });
 document.getElementById("rate-modal").addEventListener("click", e => { if(e.target.id === "rate-modal") closeRate(); });
 document.getElementById("rate-f").addEventListener("submit", sendRate);
 document.getElementById("rate-f").addEventListener("input", e => { const q = e.target.closest && e.target.closest("[data-q]"); if(q) q.classList.remove("rmiss"); });
-document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeVid(); closeRate(); } });
+document.addEventListener("keydown", e => { if(e.key === "Escape"){ closeVid(); closeRate(); closeTask(); } });
 setInterval(tickNext, 30000);
 
 document.getElementById("g-copy").addEventListener("click", function(){
