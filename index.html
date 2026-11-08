@@ -173,6 +173,9 @@ button.btn{cursor:pointer;font-family:inherit}
 .tgrem{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--surface);border:1px dashed var(--brand);border-radius:10px;padding:10px 14px;font-size:14px}
 .tgrem.on{border-style:solid;border-color:#bfe3de;color:#1f7f74;font-weight:600}
 .ns-act{display:flex;flex-wrap:wrap;gap:8px}
+.btn.att{border-color:var(--brand);color:var(--brand);font-weight:700}
+.btn.att.on{background:#e1f3f1;border-color:#1f7f74;color:#1f7f74}
+.recs .ns-act{flex:none}
 .nextstep .btn.ghost{background:transparent;border-color:rgba(255,255,255,.55);color:#fff;font-weight:600}
 .task-b{padding:14px 16px 18px;display:flex;flex-direction:column;gap:12px}
 .task-b .ti{border:1px solid var(--line);border-right:4px solid var(--gold);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
@@ -339,7 +342,7 @@ footer a{color:var(--brand);font-weight:600;text-decoration:none}
     <div class="mhead"><b id="vid-t"></b><button type="button" class="mx" id="vid-x" aria-label="إغلاق">×</button></div>
     <div class="vwrap" id="vid-f"></div>
     <div class="vnote" id="vid-n" hidden></div>
-    <div class="vfoot"><span>نحفظ لك الدقيقة التي وصلت إليها، وتُحسب «شاهدتها» بعد مشاهدة أغلب المحاضرة.</span><a class="btn" id="vid-l" href="#" target="_blank" rel="noopener">فتح على يوتيوب</a></div>
+    <div class="vfoot"><span>التسجيل للمراجعة وتعويض ما فاتك؛ نحفظ لك الدقيقة التي وصلت إليها.</span><a class="btn" id="vid-l" href="#" target="_blank" rel="noopener">فتح على يوتيوب</a></div>
   </div>
 </div>
 <a class="helpfab" id="helpfab" href="https://t.me/wahy_academy" target="_blank" rel="noopener">💬 محتاج مساعدة؟</a>
@@ -347,9 +350,9 @@ footer a{color:var(--brand);font-weight:600;text-decoration:none}
   <div class="mbox" role="dialog" aria-modal="true" aria-labelledby="tour-t" style="width:min(520px,100%)">
     <div class="mhead"><b id="tour-t">إزاي أستخدم الصفحة؟</b><button type="button" class="mx" id="tour-x" aria-label="إغلاق">×</button></div>
     <div class="task-b tour"><ol>
-      <li><b>ابدأ من «خطوتك الجاية»:</b> البطاقة الزرقاء أعلى الصفحة تقول لك أهم شيء تفعله الآن، وتحتها مربعات بعدد الاختبارات والتكليفات والتسجيلات المطلوبة منك.</li>
-      <li><b>علّم ما أنجزته:</b> اضغط «✓ حلّيته» بعد الاختبار، و«✓ خلّصته» بعد التكليف، و«✓ حضرتها مباشرة» لو حضرت المحاضرة لايف، فتختفي من قائمتك.</li>
-      <li><b>كل مساق في تبويب:</b> من الشريط (أسفل الشاشة على الموبايل) تجد تسجيلات المساق وملفاته واختباراته، وآخر محاضرة أولًا.</li>
+      <li><b>ابدأ من «خطوتك الجاية»:</b> البطاقة الزرقاء أعلى الصفحة تقول لك أهم شيء الآن (محاضرة قريبة، اختبار مفتوح، تكليف)، وتحتها مربعات بحضورك واختباراتك وتكليفاتك.</li>
+      <li><b>الحضور المباشر هو الأساس:</b> بعد كل محاضرة اضغط «✓ حضرتها»، والتسجيل للمراجعة أو لتعويض ما فاتك فقط. واضغط «✓ حلّيته» بعد الاختبار و«✓ خلّصته» بعد التكليف، فتختفي من قائمتك.</li>
+      <li><b>كل مساق في تبويب:</b> من الشريط (أسفل الشاشة على الموبايل) تجد محاضرات المساق وملفاته واختباراته، وآخر محاضرة أولًا.</li>
     </ol><div class="tbtns"><button type="button" class="btn main" id="tour-ok">فهمت، يلا نبدأ</button></div>
     <p class="tfoot" style="margin:6px 0 0">تقدر ترجع للشرح ده من زر «؟ إزاي أستخدم الصفحة» أسفل الصفحة.</p></div>
   </div>
@@ -430,6 +433,10 @@ const remapId = id => String(id).replace(/^(t[12])\|fri\|1\|/, "$1|fri|0|");
 Object.keys(SEEN).forEach(id => { const n = remapId(id); if(n !== id){ delete SEEN[id]; SEEN[n] = 1; } });
 const lecId = (ctx, l) => ctx ? ctx.term + "|" + ctx.track + "|" + ctx.k + "|" + l.n : "";
 const quizDone = (ctx, l) => lecId(ctx, l) + "|q", taskDone = (ctx, l) => lecId(ctx, l) + "|t";
+/* الحضور المباشر هو الأساس: «|a» = حضرها مباشرة، والمعرّف وحده = عوّضها بالتسجيل */
+const attId = (ctx, l) => lecId(ctx, l) + "|a";
+const attended = (ctx, l) => !!SEEN[attId(ctx, l)];
+const followed = (ctx, l) => !!(SEEN[attId(ctx, l)] || SEEN[lecId(ctx, l)]);
 function setSeen(id, on){ if(!id) return; if(on) SEEN[id] = 1; else delete SEEN[id]; store.set("wahy_y1b4_seen", JSON.stringify(SEEN)); pushSeen(); }
 /* مزامنة «شاهدتها» مع السكربت: تظهر على كل أجهزة الطالب، وتعتمد عليها لجنة المتابعة */
 let seenT = 0;
@@ -567,27 +574,34 @@ const taskList = l => !l.tasks.length ? "" : `
     <li><span class="t-text">${ICON.task}${t.text ? taskHtml(t.text) : (l.tasks.length > 1 ? "تكليف " + (i + 1) : "التكليف")}</span>
       ${t.urls.map((u, k) => `<a class="t-link" href="${esc(fixUrl(u))}" target="_blank" rel="noopener">${t.urls.length > 1 ? "الرابط " + (k + 1) : "فتح الرابط"}</a>`).join("")}</li>`).join("")}
   </ul>`;
-function vidBtn(url, label, title, id){
+function vidBtn(url, label, title, id, main = true){
   if(!isUrl(url) || !ytId(url)) return btn(url, label, "play", true);
   const k = "v" + (++VSEQ); VIDS[k] = { url, title, seen: id };
   const at = POS[ytId(url)];
-  return `<button type="button" class="btn main" data-vid="${k}">${ICON.play}${at ? "كمّل المشاهدة" : esc(label)}${at ? `<span class="at">من <bdi>${mmss(at)}</bdi></span>` : ""}</button>`;
+  return `<button type="button" class="btn${main ? " main" : ""}" data-vid="${k}">${ICON.play}${at ? "كمّل المشاهدة" : esc(label)}${at ? `<span class="at">من <bdi>${mmss(at)}</bdi></span>` : ""}</button>`;
 }
 function rateBtn(id, l, ctx){
   if(!ctx || !ctx.current || !isUrl(l.rec)) return "";
   const done = EXTRA.rated.includes(id);
   return `<button type="button" class="btn rate${done ? " done" : ""}" data-rate="${esc(id)}" data-rt="${esc(ctx.subj + " · " + l.label + (l.title ? ": " + l.title : ""))}">${done ? "✓ قيّمتها · تعديل" : "★ قيّم المحاضرة واسأل المحاضر"}</button>`;
 }
+function attBtns(ctx, l){
+  if(!ctx || !ctx.current || !(isUrl(l.rec) || l.title)) return "";
+  const a = attended(ctx, l), r = !a && SEEN[lecId(ctx, l)];
+  return `<button type="button" class="btn att${a ? " on" : ""}" data-seen="${esc(attId(ctx, l))}" aria-pressed="${a}">${a ? "✓ حضرتها مباشرة" : "○ حضرتها مباشرة"}</button>` +
+    (r ? `<button type="button" class="btn seen-btn" data-seen="${esc(lecId(ctx, l))}" aria-pressed="true" title="إلغاء">✓ عوّضتها بالتسجيل</button>` : "");
+}
 const lecActions = (l, s, ctx) =>
-  vidBtn(l.rec, "مشاهدة التسجيل", (ctx ? ctx.subj + " · " : "") + l.label + (l.title ? ": " + l.title : ""), lecId(ctx, l)) +
-  l.extra.filter(x => x.icon === "play").map(x => vidBtn(x.url, x.name, x.name, lecId(ctx, l))).join("") +
+  attBtns(ctx, l) +
+  vidBtn(l.rec, ctx && ctx.current ? "تسجيل للمراجعة" : "التسجيل", (ctx ? ctx.subj + " · " : "") + l.label + (l.title ? ": " + l.title : ""), lecId(ctx, l), !(ctx && ctx.current)) +
+  l.extra.filter(x => x.icon === "play").map(x => vidBtn(x.url, x.name, x.name, lecId(ctx, l), false)).join("") +
   s.perLecture.map(k => btn(l.files[k].val, l.files[k].name, "file", false, !l.files[k].hide)).join("") +
   btn(l.quiz, "الاختبار", "quiz", false, s.showQuiz) +
   l.extra.filter(x => x.icon !== "play").map(x => btn(x.url, x.name, x.icon)).join("") +
-  (ctx && isUrl(l.rec) ? `<button type="button" class="btn seen-btn" data-seen="${esc(lecId(ctx, l))}" aria-pressed="${!!SEEN[lecId(ctx, l)]}">${SEEN[lecId(ctx, l)] ? "✓ شاهدتها" : "○ شاهدتها"}</button>` : "") +
+  (ctx && !ctx.current && isUrl(l.rec) ? `<button type="button" class="btn seen-btn" data-seen="${esc(lecId(ctx, l))}" aria-pressed="${!!SEEN[lecId(ctx, l)]}">${SEEN[lecId(ctx, l)] ? "✓ راجعتها" : "○ راجعتها"}</button>` : "") +
   rateBtn(lecId(ctx, l), l, ctx);
 const lecItem = (l, s, subjName, ctx) => `
-  <li class="lec${ctx && SEEN[lecId(ctx, l)] ? " seen" : ""}">
+  <li class="lec${ctx && followed(ctx, l) ? " seen" : ""}">
     <div class="num">${l.n}</div>
     <div class="lec-title"><small>${subjName ? esc(subjName) + " · " : ""}${esc(l.label)}</small><strong>${esc(l.title || "—")}${s.latest === l ? '<span class="new">جديد</span>' : ""}</strong></div>
     <div class="actions">${lecActions(l, s, ctx)}</div>
@@ -688,24 +702,24 @@ function nextStep(term, now, over){
       const left = untilMin(now, sc.quizAt.to.dow, sc.quizAt.to.time);
       cand.push({ p: 1, w: left, html: card("خطوتك الجاية", `📝 حل اختبار ${esc(sub.name)} · ${esc(l.label)}`, `${esc(short)} · يُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)} · باقي ${fmtLeft(left)}`, `<div class="ns-act">${btn(l.quiz, "ابدأ الاختبار", "quiz", true)}<button type="button" class="btn ghost" data-done="${esc(quizDone(ctx, l))}">✓ حلّيته</button></div>`) });
     }
-    /* آخر محاضرة لم تُعلَّم: قبل اختبارها (ومن حضرها مباشرة يعلّمها بزر واحد) */
-    if(l && isUrl(l.rec) && !SEEN[lecId(ctx, l)] && !qOpen){
+    /* المحاضرة المباشرة القادمة خلال 3 ساعات: الحضور أولًا */
+    const toLec = sc && sc.at ? untilMin(now, sc.at.dow, sc.at.start) : WEEK;
+    if(toLec <= 180) cand.push({ p: 0, w: toLec, html: card("خطوتك الجاية", `🎓 محاضرة ${esc(short)} بعد ${fmtLeft(toLec)}`, `${DAYS[sc.at.dow]} ${clock(sc.at.start)}–${clock(sc.at.end)} · رابط الحضور في مجموعة المساق على تيليجرام`) });
+    /* آخر محاضرة لم يُسجَّل حضورها: هل حضرتها مباشرة؟ ومن فاتته يعوّضها بالتسجيل */
+    if(l && !followed(ctx, l) && !qOpen){
       const t = sub.name + " · " + l.label + (l.title ? ": " + l.title : "");
-      cand.push({ p: 2, w: toOpen, html: card("خطوتك الجاية", `▶ راجع ${esc(sub.name)} · ${esc(l.label)}`, `${esc(short)}${qWhen ? " · قبل اختبارها: " + qWhen : ""}`, `<div class="ns-act">${vidBtn(l.rec, "مشاهدة التسجيل", t, lecId(ctx, l))}<button type="button" class="btn ghost" data-seen="${esc(lecId(ctx, l))}">✓ حضرتها مباشرة</button></div>`) });
+      cand.push({ p: 2, w: toOpen, html: card("خطوتك الجاية", `🎓 حضرت ${esc(sub.name)} · ${esc(l.label)} مباشرة؟`, `${esc(short)}${l.title ? " · " + esc(l.title) : ""}${qWhen ? " · اختبارها " + qWhen : ""}`, `<div class="ns-act"><button type="button" class="btn main" data-seen="${esc(attId(ctx, l))}">✓ حضرتها</button>${isUrl(l.rec) ? vidBtn(l.rec, "فاتتني: شاهد التسجيل", t, lecId(ctx, l), false).replace('class="btn"', 'class="btn ghost"') : ""}</div>`) });
     }
     /* الاختبار القادم بعدّاد حتى فتحه */
     if(l && sc && sc.quizAt && !qOpen && toOpen <= 4 * 1440 && !SEEN[quizDone(ctx, l)])
       cand.push({ p: 3, w: toOpen, html: card("خطوتك الجاية", `📝 اختبار ${esc(sub.name)} · ${esc(l.label)}`, `${esc(short)} · يُفتح بعد ${fmtLeft(toOpen)} (${DAYS[sc.quizAt.from.dow]} ${clock(sc.quizAt.from.time)}) ويُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)}`, `<button type="button" class="btn" data-ics>🔔 نبّهني في تقويم هاتفي</button>`) });
     if(l && l.tasks.length && !SEEN[taskDone(ctx, l)]) cand.push({ p: 4, w: 0, html: card("خطوتك الجاية", `✍️ تكليف ${esc(sub.name)} · ${esc(l.label)}`, esc(short), `<div class="ns-act">${taskBtn(sub.name + " · " + l.label, l, track.id, k, "عرض التكليف", taskDone(ctx, l))}<button type="button" class="btn ghost" data-done="${esc(taskDone(ctx, l))}">✓ خلّصته</button></div>`) });
-    const older = [...r.lectures].reverse().find(x => x !== l && isUrl(x.rec) && !SEEN[lecId(ctx, x)]);
-    if(older){
-      const t = sub.name + " · " + older.label + (older.title ? ": " + older.title : "");
-      cand.push({ p: 5, w: toOpen, html: card("خطوتك الجاية", `▶ شاهد ${esc(sub.name)} · ${esc(older.label)}`, `${esc(short)}${older.title ? " · " + esc(older.title) : ""}`, `<div class="ns-act">${vidBtn(older.rec, "مشاهدة التسجيل", t, lecId(ctx, older))}<button type="button" class="btn ghost" data-seen="${esc(lecId(ctx, older))}">✓ حضرتها مباشرة</button></div>`) });
-    }
+    /* المحاضرة القادمة (أبعد من 3 ساعات) تذكيرًا بالحضور */
+    if(sc && sc.at && toLec > 180) cand.push({ p: 6, w: toLec, html: card("خطوتك الجاية", `🎓 محاضرتك القادمة: ${esc(short)}`, `${DAYS[sc.at.dow]} ${clock(sc.at.start)} · بعد ${fmtLeft(toLec)} · احرص على الحضور المباشر`, `<button type="button" class="btn" data-ics>🔔 نبّهني قبلها</button>`) });
   });
   cand.sort((a, b) => a.p - b.p || a.w - b.w);
   if(cand.length) return cand[0].html;
-  return card("خطوتك الجاية", "أنت متابع كل حاجة، بارك الله فيك 🌿", "راجع آخر المحاضرات أو استعد للمحاضرة القادمة.");
+  return card("خطوتك الجاية", "أنت متابع كل حاجة، بارك الله فيك 🌿", "استعد للمحاضرة القادمة واحرص على حضورها مباشرة.");
 }
 
 /* نص التكليف كنقاط: أسطر الشيت كما هي، والترقيم (1- 2- أو ١- ٢-) يبدأ سطرًا جديدًا */
@@ -801,9 +815,10 @@ function weekView(){
     subjOrder(term, track).forEach((k, pos) => {
       const sub = track.subjects[k], r = subjectOf(sub); if(!r) return;
       const ctx = { term: term.id, track: track.id, k, subj: sub.name, current: true };
-      unseenN += r.lectures.filter(x => isUrl(x.rec) && !SEEN[lecId(ctx, x)]).length;
       if(pos !== 0 || !r.latest) return;
       const l = r.latest;
+      if(!followed(ctx, l)){ unseenN++;
+        unseen.push(`<li><span><b>${esc(short)}</b>: ${esc(sub.name)} · ${esc(l.label)}</span><span class="ns-act"><button type="button" class="btn main" data-seen="${esc(attId(ctx, l))}">✓ حضرتها</button>${isUrl(l.rec) ? vidBtn(l.rec, "تسجيل للمراجعة", sub.name + " · " + l.label + (l.title ? ": " + l.title : ""), lecId(ctx, l), false) : ""}</span></li>`); }
       if(sc && sc.quizAt && isUrl(l.quiz) && !SEEN[quizDone(ctx, l)]){
         const open = inWindow(now, sc.quizAt.from, sc.quizAt.to);
         quizzes.push({ open, left: open ? untilMin(now, sc.quizAt.to.dow, sc.quizAt.to.time) : untilMin(now, sc.quizAt.from.dow, sc.quizAt.from.time),
@@ -817,18 +832,17 @@ function weekView(){
         taskBtn(sub.name + " · " + l.label, l, track.id, k, "عرض التكليف", taskDone(ctx, l)) + `<button type="button" class="btn" data-done="${esc(taskDone(ctx, l))}">✓ خلّصته</button>`));
     });
     unseenAll += unseenN;
-    if(unseenN) unseen.push(`<li><span><b>${esc(short)}</b>: ${unseenN} ${unseenN === 1 ? "محاضرة" : unseenN <= 10 ? "محاضرات" : "محاضرة"}</span><button type="button" class="btn" data-open="${esc(track.id)}">عرض</button></li>`);
   });
   quizzes.sort((a, b) => (b.open - a.open) || (a.left - b.left));
   const due = [...quizzes.map(x => x.html), ...tasks];
-  if(unseen.length) due.push(`<li class="due rec"><div class="due-h"><span class="due-t">🎥 تسجيلات لم تشاهدها</span><span class="due-m">كل المساقات</span></div><div class="due-d">شاهدها قبل محاضرة كل مساق القادمة</div><ul class="recs">${unseen.join("")}</ul></li>`);
+  if(unseen.length) due.unshift(`<li class="due rec"><div class="due-h"><span class="due-t">🎓 محاضرات الأسبوع: حضرتها؟</span><span class="due-m">آخر محاضرة في كل مساق</span></div><div class="due-d">علّم ما حضرته مباشرة، ومن فاتته محاضرة يعوّضها بالتسجيل قبل اختبارها</div><ul class="recs">${unseen.join("")}</ul></li>`);
   /* ملخص ومربعات سريعة تحت «خطوتك الجاية» */
   if(!over){
     const nQ = quizzes.length, nT = tasks.length;
-    const parts = [nQ ? (nQ === 1 ? "اختبار واحد" : nQ === 2 ? "اختباران" : nQ + " اختبارات") : "", nT ? (nT === 1 ? "تكليف واحد" : nT === 2 ? "تكليفان" : nT + " تكليفات") : "", unseenAll ? (unseenAll === 1 ? "تسجيل واحد لم تشاهده" : unseenAll + (unseenAll <= 10 ? " تسجيلات" : " تسجيلًا") + " لم تشاهدها") : ""].filter(Boolean);
+    const parts = [nQ ? (nQ === 1 ? "اختبار واحد" : nQ === 2 ? "اختباران" : nQ + " اختبارات") : "", nT ? (nT === 1 ? "تكليف واحد" : nT === 2 ? "تكليفان" : nT + " تكليفات") : "", unseenAll ? (unseenAll === 1 ? "محاضرة لم تسجّل حضورها" : unseenAll + " محاضرات لم تسجّل حضورها") : ""].filter(Boolean);
     const tile = (ico, name, n, jump, zero) => `<button type="button" class="tile${n === 0 ? " zero" : ""}" data-jump="${jump}"><i>${ico}</i><b>${name}</b><span>${n === null ? zero : n ? n : "✓"}</span></button>`;
     out.splice(2, 0, `<section class="tiles-wrap"><p class="hello">${parts.length ? "عليك هذا الأسبوع: " + parts.join("، ") + "." : "لا يوجد مطلوب منك الآن، بارك الله فيك 🌿"}</p><div class="tiles">
-      ${tile("📝", "الاختبارات", nQ, "w-quiz")}${tile("✍️", "التكليفات", nT, "w-task")}${tile("🎥", "لم أشاهدها", unseenAll, "w-rec")}${tile("🗓", "جدول الترم", null, "w-term", "عرض")}</div></section>`);
+      ${tile("🎓", "سجّل حضورك", unseenAll, "w-rec")}${tile("📝", "الاختبارات", nQ, "w-quiz")}${tile("✍️", "التكليفات", nT, "w-task")}${tile("🗓", "جدول الترم", null, "w-term", "عرض")}</div></section>`);
   }
   out.push(`<section class="card week" id="w-due"><h3>مطلوب منك الأسبوع ده</h3>${due.length ? `<ul>${due.join("")}</ul>` : `<p class="rnote">لا يوجد مطلوب الآن، بارك الله فيك 🌿</p>`}</section>`);
   out.push(gradesCard());
@@ -889,8 +903,7 @@ function weekCard(term, track){
         ${open ? btn(l.quiz, "ابدأ الاختبار", "quiz", true) : ""}</li>`);
     }
     if(l.tasks.length) items.push(`<li><span class="pill warn">تكليف</span> ${esc(sub.name)} · ${esc(l.label)}: ${l.tasks.length === 1 ? "تكليف واحد" : l.tasks.length + " تكليفات"} <button type="button" class="btn" data-goto="${k}" data-term="${esc(term.id)}">عرض</button></li>`);
-    const unseen = r.lectures.filter(x => isUrl(x.rec) && !SEEN[lecId(ctx, x)]).length;
-    if(unseen) items.push(`<li><span class="pill">لم تشاهدها</span> ${esc(sub.name)}: ${unseen} ${unseen === 1 ? "محاضرة" : unseen <= 10 ? "محاضرات" : "محاضرة"} <button type="button" class="btn" data-goto="${k}" data-term="${esc(term.id)}">عرض</button></li>`);
+    if(!followed(ctx, l)) items.push(`<li><span class="pill">حضرتها؟</span> ${esc(sub.name)} · ${esc(l.label)} <button type="button" class="btn main" data-seen="${esc(attId(ctx, l))}">✓ حضرتها</button></li>`);
   });
   if(!items.length) return "";
   return `<section class="card week"><h3>مطلوب منك الأسبوع ده</h3><ul>${items.join("")}</ul></section>`;
@@ -910,9 +923,9 @@ function tabMark(term, track, k){
   const r = subjectOf(track.subjects[k]); if(!r) return "";
   const ctx = { term: term.id, track: track.id, k };
   const rec = r.lectures.filter(l => isUrl(l.rec)); if(!rec.length) return "";
-  if(rec.every(l => SEEN[lecId(ctx, l)])) return `<span class="ok" title="شاهدت كل التسجيلات">✓</span>`;
+  if(rec.every(l => followed(ctx, l))) return `<span class="ok" title="تابعت كل المحاضرات">✓</span>`;
   const last = rec[rec.length - 1];
-  return SEEN[lecId(ctx, last)] ? "" : `<span class="dotn" title="تسجيل جديد لم تشاهده"></span>`;
+  return followed(ctx, last) ? "" : `<span class="dotn" title="آخر محاضرة: لم تسجّل حضورها"></span>`;
 }
 /* آخر محاضرة ظاهرة، والباقي مطوي */
 function lectureList(r, ctx, sub){
@@ -922,8 +935,9 @@ function lectureList(r, ctx, sub){
 }
 function progress(r, ctx){
   const rec = r.lectures.filter(l => isUrl(l.rec)); if(!rec.length) return "";
-  const w = rec.filter(l => SEEN[lecId(ctx, l)]).length, pct = Math.round(w / rec.length * 100);
-  return `<div class="prog"><span>شاهدت ${w} من ${rec.length}</span><span class="bar"><i style="width:${pct}%"></i></span></div>`;
+  if(!ctx.current) return "";
+  const a = rec.filter(l => attended(ctx, l)).length, w = rec.filter(l => followed(ctx, l)).length, pct = Math.round(a / rec.length * 100);
+  return `<div class="prog"><span>حضرت ${a} من ${rec.length}${w > a ? ` · عوّضت ${w - a} بالتسجيل` : ""}</span><span class="bar"><i style="width:${pct}%"></i></span></div>`;
 }
 function subjOrder(term, track){
   const idx = track.subjects.map((_, k) => k);
