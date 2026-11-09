@@ -255,6 +255,15 @@ details.more[open] summary{margin-bottom:10px}
 .tab .ok{color:#1f7f74;font-weight:700}
 .tab[aria-selected="true"] .ok{color:#9be3d6}
 .nextstep{background:linear-gradient(135deg,var(--brand-deep),var(--brand));color:#fff;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;border-bottom:4px solid var(--gold)}
+.ns-row.urgent{background:rgba(214,48,49,.32);border-color:#ff8f8f}.ns-row.urgent .ns-n{background:#ff6b6b;color:#fff}.ns-warn{background:#ff6b6b;color:#fff;border-radius:999px;padding:1px 9px;font-weight:700}
+.chip.rv{border-color:var(--brand);background:#e8f0f8;color:var(--brand-deep)}
+.rv-head{background:linear-gradient(135deg,var(--brand-deep),var(--brand));color:#fff;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:8px;border-bottom:4px solid var(--gold)}.rv-head small{color:var(--gold);font-weight:700}.rv-head b{font-size:17px;line-height:1.5}.rv-head .sub{color:#dbe7f3;font-size:13px}
+.rv-tot{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.rv-tot b{font-size:15px}
+.rv-bar{flex:1;min-width:80px;height:8px;border-radius:99px;background:rgba(0,50,98,.12);overflow:hidden;display:block}.rv-bar i{display:block;height:100%;background:var(--gold);border-radius:99px}.rv-head .rv-bar{background:rgba(255,255,255,.2)}.rv-bar.big{height:10px}
+.rv-s{border:1px solid var(--line);border-radius:10px;margin-top:10px;background:var(--surface)}.rv-s>summary{cursor:pointer;padding:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;list-style:none}.rv-s>summary::-webkit-details-marker{display:none}.rv-s>summary b{font-size:16px}.rv-c{font-size:13px;color:var(--muted)}.rv-c.full{color:#1e7a46;font-weight:700}
+.rv-files{display:flex;flex-wrap:wrap;gap:8px;padding:0 12px 10px}
+.rv-list{list-style:none;margin:0;padding:0 12px 12px;display:flex;flex-direction:column;gap:8px}.rv-l{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:8px}.rv-l .num{width:26px;height:26px;border-radius:50%;background:var(--gold-soft);color:var(--gold-ink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none}.rv-l.on .num{background:#1e7a46;color:#fff}
+.rv-t{flex:1;min-width:160px;display:flex;flex-direction:column}.rv-t small{color:var(--muted)}.rv-a{display:flex;flex-wrap:wrap;gap:6px}.rv-b.on{background:#e6f4ec;border-color:#1e7a46;color:#1e7a46;font-weight:700}
 .ns-list{display:flex;flex-direction:column;gap:8px}.ns-row{position:relative;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:10px 44px 10px 12px;display:flex;flex-direction:column;gap:6px}.ns-row b{font-size:15.5px}.ns-n{position:absolute;right:10px;top:10px;width:24px;height:24px;border-radius:50%;background:var(--gold);color:var(--brand-deep);font-style:normal;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
 .nextstep small{color:var(--gold);font-weight:700;font-size:12.5px}
 .nextstep b{font-size:17px;line-height:1.5}
@@ -270,7 +279,7 @@ details.scd > .stack{gap:10px}
 @media (max-width:599px){
   body{padding-bottom:calc(64px + env(safe-area-inset-bottom))}
   .wrap{padding-top:14px}
-  .trackbar{position:fixed;top:auto;bottom:0;left:0;right:0;margin:0;padding:6px 4px calc(6px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,1fr);gap:2px;background:rgba(255,255,255,.97);border-top:1px solid var(--line);border-bottom:0;box-shadow:0 -2px 10px rgba(20,38,61,.08)}
+  .trackbar{position:fixed;top:auto;bottom:0;left:0;right:0;margin:0;padding:6px 4px calc(6px + env(safe-area-inset-bottom));display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;background:rgba(255,255,255,.97);border-top:1px solid var(--line);border-bottom:0;box-shadow:0 -2px 10px rgba(20,38,61,.08)}
   .trackbar .chip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border:0;background:transparent;padding:4px 2px;border-radius:10px;font-size:11.5px;min-height:50px;color:var(--muted)}
   .trackbar .chip i{margin:0;font-size:19px;line-height:1.1}
   .trackbar .chip .lf{display:none}
@@ -278,6 +287,8 @@ details.scd > .stack{gap:10px}
   .trackbar .chip[aria-pressed="true"]{background:var(--brand-soft);color:var(--brand-deep)}
   .trackbar .chip.wk{background:transparent;color:var(--muted)}
   .trackbar .chip.wk[aria-pressed="true"]{background:var(--gold-soft);color:var(--gold-ink)}
+  .trackbar .chip.rv{background:transparent;color:var(--muted)}
+  .trackbar .chip.rv[aria-pressed="true"]{background:var(--brand-soft);color:var(--brand-deep)}
   .btn{min-height:42px}
   .btn:not(.main){padding:6px 11px}
 }
@@ -356,6 +367,7 @@ footer a{color:var(--brand);font-weight:600;text-decoration:none}
       <li><b>ابدأ من «خطوتك الجاية»:</b> البطاقة الزرقاء أعلى الصفحة فيها كل المطلوب منك هذا الأسبوع مرتّبًا: الاختبارات المفتوحة ثم التكليفات ثم الاختبارات القادمة، وتحتها مربعات بحضورك واختباراتك وتكليفاتك.</li>
       <li><b>الحضور المباشر هو الأساس:</b> بعد كل محاضرة اضغط «✓ حضرتها»، والتسجيل للمراجعة أو لتعويض ما فاتك فقط. واضغط «✓ حلّيته» بعد الاختبار و«✓ خلّصته» بعد التكليف، فتختفي من قائمتك.</li>
       <li><b>كل مساق في تبويب:</b> من الشريط (أسفل الشاشة على الموبايل) تجد محاضرات المساق وملفاته واختباراته، وآخر محاضرة أولًا.</li>
+      <li><b>قبل النهائيات:</b> يظهر تبويب «📚 مراجعة النهائي» فيه كل محاضرات الترم بتسجيلاتها وملفاتها، وعلّم «✓ راجعتها» لتعرف ما بقي عليك.</li>
     </ol><div class="tbtns"><button type="button" class="btn main" id="tour-ok">فهمت، يلا نبدأ</button></div>
     <p class="tfoot" style="margin:6px 0 0">تقدر ترجع للشرح ده من زر «؟ إزاي أستخدم الصفحة» أسفل الصفحة.</p></div>
   </div>
@@ -700,13 +712,16 @@ function nextStep(term, now, over){
     const qOpen = l && sc && sc.quizAt && inWindow(now, sc.quizAt.from, sc.quizAt.to);
     const toOpen = sc && sc.quizAt ? untilMin(now, sc.quizAt.from.dow, sc.quizAt.from.time) : WEEK;
     const toLec = sc && sc.at ? untilMin(now, sc.at.dow, sc.at.start) : WEEK;
-    if(qOpen && isUrl(l.quiz) && !SEEN[quizDone(ctx, l)]){
-      const left = untilMin(now, sc.quizAt.to.dow, sc.quizAt.to.time);
-      cand.push({ p: 1, w: left, kind: "q", html: row(`📝 اختبار ${esc(sub.name)} · ${esc(l.label)}`, `${esc(short)} · مفتوح الآن · يُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)} · باقي ${fmtLeft(left)}`, `<div class="ns-act">${btn(l.quiz, "ابدأ الاختبار", "quiz", true)}<button type="button" class="btn ghost" data-done="${esc(quizDone(ctx, l))}">✓ حلّيته</button></div>`) });
+    /* خانة الاختبار في الشيت: رابط = اختبار، «بدون اختبار» = لا يظهر، فارغة = متوقَّع ورابطه لم ينزل بعد */
+    const noQuiz = l && /بدون\s*اختبار|لا\s*يوجد/.test(l.quiz || "");
+    if(qOpen && !noQuiz && !SEEN[quizDone(ctx, l)]){
+      const left = untilMin(now, sc.quizAt.to.dow, sc.quizAt.to.time), has = isUrl(l.quiz);
+      const urgent = left < 1440;
+      cand.push({ p: urgent ? 0 : 1, w: left, kind: "q", urgent, html: row(`${urgent ? "⚠️" : "📝"} اختبار ${esc(sub.name)} · ${esc(l.label)}`, `${urgent ? `<span class="ns-warn">يُقفل خلال ${fmtLeft(left)}</span> · ` : ""}${esc(short)} · مفتوح الآن · يُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)}${urgent ? "" : ` · باقي ${fmtLeft(left)}`}${has ? "" : " · الرابط هيظهر هنا أول ما ينزل"}`, `<div class="ns-act">${has ? btn(l.quiz, "ابدأ الاختبار", "quiz", true) : ""}<button type="button" class="btn ghost" data-done="${esc(quizDone(ctx, l))}">✓ حلّيته</button></div>`) });
     }
     if(l && l.tasks.length && !SEEN[taskDone(ctx, l)]) cand.push({ p: 2, w: toOpen, kind: "t", html: row(`✍️ تكليف ${esc(sub.name)} · ${esc(l.label)}`, esc(short), `<div class="ns-act">${taskBtn(sub.name + " · " + l.label, l, track.id, k, "عرض التكليف", taskDone(ctx, l))}<button type="button" class="btn ghost" data-done="${esc(taskDone(ctx, l))}">✓ خلّصته</button></div>`) });
     /* اختبار آخر محاضرة لم يُفتح بعد (يُفتح قبل المحاضرة التالية) */
-    if(l && sc && sc.quizAt && !qOpen && toOpen < toLec && !SEEN[quizDone(ctx, l)])
+    if(l && sc && sc.quizAt && !qOpen && !noQuiz && toOpen < toLec && !SEEN[quizDone(ctx, l)])
       cand.push({ p: 3, w: toOpen, kind: "q", html: row(`📝 اختبار ${esc(sub.name)} · ${esc(l.label)}`, `${esc(short)} · يُفتح بعد ${fmtLeft(toOpen)} (${DAYS[sc.quizAt.from.dow]} ${clock(sc.quizAt.from.time)}) ويُقفل ${DAYS[sc.quizAt.to.dow]} ${clock(sc.quizAt.to.time)}`, `<button type="button" class="btn ghost" data-ics>🔔 نبّهني في تقويم هاتفي</button>`) });
   });
   cand.sort((a, b) => a.p - b.p || a.w - b.w);
@@ -714,7 +729,7 @@ function nextStep(term, now, over){
   if(!cand.length) return `<section class="nextstep"><small>خطوتك الجاية</small><b>مفيش اختبار ولا تكليف عليك دلوقتي، بارك الله فيك 🌿</b><span class="sub">اختبارات وتكليفات الأسبوع الجاي هتظهر هنا أول ما تنزل.</span></section>`;
   const nq = cand.filter(c => c.kind === "q").length, nt = cand.length - nq;
   const cnt = [nq ? (nq === 1 ? "اختبار واحد" : nq === 2 ? "اختباران" : nq + " اختبارات") : "", nt ? (nt === 1 ? "تكليف واحد" : nt === 2 ? "تكليفان" : nt + " تكليفات") : ""].filter(Boolean).join(" و");
-  return `<section class="nextstep"><small>خطوتك الجاية · المطلوب منك هذا الأسبوع</small><b>عليك ${cnt}</b><div class="ns-list">${cand.map((c, i) => c.html.replace('<div class="ns-row" data-kind="KIND">', `<div class="ns-row" data-kind="${c.kind}"><i class="ns-n">${i + 1}</i>`)).join("")}</div></section>`;
+  return `<section class="nextstep"><small>خطوتك الجاية · المطلوب منك هذا الأسبوع</small><b>عليك ${cnt}</b><div class="ns-list">${cand.map((c, i) => c.html.replace('<div class="ns-row" data-kind="KIND">', `<div class="ns-row${c.urgent ? " urgent" : ""}" data-kind="${c.kind}"><i class="ns-n">${i + 1}</i>`)).join("")}</div></section>`;
 }
 
 /* نص التكليف كنقاط: أسطر الشيت كما هي، والترقيم (1- 2- أو ١- ٢-) يبدأ سطرًا جديدًا */
@@ -788,6 +803,32 @@ function tgLink(b){
   }).catch(() => { if(w) w.close(); b.disabled = false; b.textContent = "تعذّر الاتصال، حاول مرة أخرى"; });
 }
 
+
+/* ---------- تبويب «مراجعة النهائي»: كل محاضرات الترم بتسجيلاتها وملفاتها، وعلامة «راجعتها» ---------- */
+const revId = (ctx, l) => lecId(ctx, l) + "|r";
+function reviewView(){
+  const term = TERM_ORDER[0], d = daysToFinals(term);
+  let all = 0, done = 0;
+  const tracks = term.tracks.map(track => {
+    const short = track.name.replace(/^مساق\s+/, "");
+    const subs = (track.subjects || []).map((sub, k) => {
+      const r = subjectOf(sub); if(!r) return "";
+      const lecs = r.lectures.filter(l => isUrl(l.rec) || l.title); if(!lecs.length) return "";
+      const ctx = { term: term.id, track: track.id, k, subj: sub.name, current: false };
+      const a = lecs.filter(l => SEEN[revId(ctx, l)]).length; all += lecs.length; done += a;
+      const key = "rv|" + track.id + "|" + k, pct = Math.round(a / lecs.length * 100);
+      const files = [...r.shared.map(f => btn(f.url, f.name, "file", false)), ...r.refs.map(f => btn(f.url, f.label, "file", false))].join("");
+      const items = lecs.map(l => { const on = !!SEEN[revId(ctx, l)];
+        return `<li class="rv-l${on ? " on" : ""}"><span class="num">${l.n}</span><span class="rv-t"><small>${esc(l.label)}</small>${esc(l.title || "—")}</span><span class="rv-a">${isUrl(l.rec) ? vidBtn(l.rec, "التسجيل", sub.name + " · " + l.label + (l.title ? ": " + l.title : ""), "", false) : ""}${r.perLecture.map(i => isUrl(l.files[i].val) ? btn(l.files[i].val, l.files[i].name, "file", false) : "").join("")}<button type="button" class="btn rv-b${on ? " on" : ""}" data-done="${esc(revId(ctx, l))}" aria-pressed="${on}">${on ? "✓ راجعتها" : "○ راجعتها"}</button></span></li>`; }).join("");
+      return `<details class="rv-s" data-more="${esc(key)}"${state.more[key] ? " open" : ""}><summary><b>${esc(sub.name)}</b><span class="rv-c${a === lecs.length ? " full" : ""}">${a === lecs.length ? "✓ " : ""}راجعت ${a} من ${lecs.length}</span><span class="rv-bar"><i style="width:${pct}%"></i></span></summary>${files ? `<div class="rv-files">${files}</div>` : ""}<ol class="rv-list">${items}</ol></details>`;
+    }).join("");
+    return subs ? `<section class="card week"><h3>${esc(short)}</h3>${subs}</section>` : "";
+  }).join("");
+  const pct = all ? Math.round(done / all * 100) : 0;
+  return `<div class="stack"><section class="rv-head"><small>📚 مراجعة النهائي</small><b>${term.finals ? `الاختبارات النهائية: ${esc(term.finals)}` : "مراجعة مقررات الترم"}${d === null ? "" : ` · ${finalsLeft(d)}`}</b>
+    <span class="sub">افتح كل مقرر، راجع محاضراته بالتسجيل والملف، وعلّم «✓ راجعتها» بعد كل محاضرة.</span>
+    <div class="rv-tot"><span>راجعت ${done} من ${all} محاضرة</span><span class="rv-bar big"><i style="width:${pct}%"></i></span><b>${pct}%</b></div></section>${tracks}</div>`;
+}
 /* ---------- تبويب «هذا الأسبوع»: كل المساقات في صفحة واحدة ---------- */
 function weekView(){
   const term = TERM_ORDER[0], now = cairoNow(), nowMin = now.dow * 1440 + now.min;
@@ -884,13 +925,21 @@ function weekCard(term, track){
   return `<section class="card week"><h3>مطلوب منك الأسبوع ده</h3><ul>${items.join("")}</ul></section>`;
 }
 
+/* أيام حتى الاختبارات النهائية (null لو غير محددة) */
+function daysToFinals(term){
+  if(!term || !term.finalsFrom) return null;
+  const now = cairoNow(), ymd = x => Date.UTC(+x.slice(0,4), +x.slice(5,7) - 1, +x.slice(8,10));
+  return Math.round((ymd(term.finalsFrom) - ymd(now.ymd)) / 864e5);
+}
+const finalsLeft = d => d > 0 ? `باقي ${d === 1 ? "يوم" : d === 2 ? "يومين" : d + (d <= 10 ? " أيام" : " يومًا")}` : d === 0 ? "تبدأ اليوم" : "بدأت";
+/* تبويب «مراجعة النهائي» يظهر قبل النهائيات بـ 19 يومًا (أول ديسمبر لنهائيات 20 ديسمبر) */
+const REVIEW_DAYS = 19;
+function reviewOpen(){ const d = daysToFinals(TERM_ORDER[0]); return d !== null && d <= REVIEW_DAYS; }
 /* شريط الاختبارات النهائية أعلى الصفحة (ظاهر في كل التبويبات) */
 function finalsBar(){
   const el = document.getElementById("finalsbar"), term = TERM_ORDER[0];
   if(!el || !term || !term.finals){ if(el) el.hidden = true; return; }
-  const now = cairoNow(); let cd = "";
-  if(term.finalsFrom){ const a = Date.UTC(+term.finalsFrom.slice(0,4), +term.finalsFrom.slice(5,7) - 1, +term.finalsFrom.slice(8,10)), b = Date.UTC(+now.ymd.slice(0,4), +now.ymd.slice(5,7) - 1, +now.ymd.slice(8,10));
-    const d = Math.round((a - b) / 864e5); cd = d > 0 ? `باقي ${d === 1 ? "يوم" : d === 2 ? "يومين" : d + (d <= 10 ? " أيام" : " يومًا")}` : d === 0 ? "تبدأ اليوم" : "بدأت"; }
+  const d = daysToFinals(term), cd = d === null ? "" : finalsLeft(d);
   el.innerHTML = `<span class="fb-i">🗓</span><span class="fb-t">الاختبارات النهائية لـ${esc(term.name)}: <b>${esc(term.finals)}</b></span>${cd ? `<span class="fb-c">${cd}</span>` : ""}`;
   el.hidden = false;
 }
@@ -899,7 +948,8 @@ function drawPickers(){
   const ICO = { thu:"🌙", fri:"🕌", "sat-am":"☀️", "sat-pm":"🌇" };
   const short = n => n.replace(/^مساق\s+/, "").replace(/صباحًا$/, "ص").replace(/مساءً$/, "م");
   document.getElementById("tracks").innerHTML = `<button class="chip wk" data-track="week" aria-pressed="${state.track === "week"}"><i>📌</i><span class="lf">هذا الأسبوع</span><span class="ls">الأسبوع</span></button>` + TERM_ORDER[0].tracks.map(t =>
-    `<button class="chip" data-track="${esc(t.id)}" aria-pressed="${t.id === state.track}"><i>${ICO[t.id] || "📘"}</i><span class="lf">${esc(t.name.replace(/^مساق\s+/, ""))}</span><span class="ls">${esc(short(t.name))}</span></button>`).join("");
+    `<button class="chip" data-track="${esc(t.id)}" aria-pressed="${t.id === state.track}"><i>${ICO[t.id] || "📘"}</i><span class="lf">${esc(t.name.replace(/^مساق\s+/, ""))}</span><span class="ls">${esc(short(t.name))}</span></button>`).join("") +
+    (reviewOpen() || state.track === "review" ? `<button class="chip rv" data-track="review" aria-pressed="${state.track === "review"}"><i>📚</i><span class="lf">مراجعة النهائي</span><span class="ls">المراجعة</span></button>` : "");
 }
 
 /* ترتيب المقررات في الترم الحالي: المقرر الجاري أولًا (آخر مقرر بدأ ولم يكتمل)، ثم الأحدث فالأقدم، ثم ما لم يبدأ بعد */
@@ -973,7 +1023,7 @@ function termSection(term, track, isNewest){
 
 function drawMain(){
   const main = document.getElementById("main");
-  const week = state.track === "week";
+  const week = state.track === "week" || state.track === "review";
   const pairs = week ? TERM_ORDER.flatMap(term => term.tracks.map(track => ({ term, track })))
                      : TERM_ORDER.map(term => ({ term, track: trackIn(term, state.track) }));
   if(state.q.trim()){
@@ -988,12 +1038,13 @@ function drawMain(){
       ${hits.length ? `<ol class="lectures">${hits.join("")}</ol>` : `<div class="msg">لا توجد محاضرة بهذا الاسم.</div>`}</div>`;
     return;
   }
+  if(state.track === "review"){ main.innerHTML = reviewView(); return; }
   main.innerHTML = week ? weekView() : `<div class="stack">${annStrip(state.track)}${pairs.map((p, k) => termSection(p.term, p.track, k === 0)).join("")}</div>`;
   tickNext();
 }
 
 function render(){ drawPickers(); drawMain(); }
-function validTrack(id){ return DATA && (id === "week" || TERM_ORDER[0].tracks.some(t => t.id === id)) ? id : null; }
+function validTrack(id){ return DATA && (id === "week" || id === "review" || TERM_ORDER[0].tracks.some(t => t.id === id)) ? id : null; }
 function go(track){
   state.track = validTrack(track) || "week"; state.sub = {};
   store.set(KEY.track, state.track);
