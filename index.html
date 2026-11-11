@@ -329,7 +329,7 @@ footer a{color:var(--brand);font-weight:600;text-decoration:none}
     <ol>
       <li>افتح الصفحة من <b>Chrome</b> أو <b>Safari</b>.</li>
       <li>اضغط زر جوجل بالأسفل واختر حسابك.</li>
-      <li>ستبقى داخلًا على جهازك، فلن تحتاج للدخول في كل مرة.</li>
+      <li>ستبقى داخلًا على جهازك مدة يومين، ثم يُطلب منك الدخول مرة أخرى حفاظًا على حسابك.</li>
     </ol>
     <div id="g-btn"></div>
     <div class="mmsg" id="me-msg" role="status"></div>
@@ -1134,7 +1134,7 @@ function boot(){
       saveLogin(d);
       const keepQ = state.q, keepSub = { ...state.sub };
       showApp(d, d.email); state.q = keepQ; state.sub = keepSub; drawMain();
-    } else if(d && d.ok === false && d.reason !== "error"){ logout(); }
+    } else if(d && d.ok === false && d.reason !== "error"){ logout(); if(d.reason === "expired") setMsg("", "انتهت مدة الدخول (يومان) حفاظًا على حسابك، فادخل مرة أخرى بحساب جوجل."); }
     else if(!cached){ document.getElementById("main").innerHTML = `<div class="msg">تعذّر تحميل الروابط الآن. حدّث الصفحة بعد قليل.</div>`; }
   }).catch(() => { if(!cached) document.getElementById("main").innerHTML = `<div class="msg">تعذّر الاتصال. تأكد من الإنترنت ثم حدّث الصفحة.</div>`; });
 }
